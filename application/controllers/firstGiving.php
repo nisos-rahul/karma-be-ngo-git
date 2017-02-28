@@ -80,7 +80,7 @@ class FirstGiving extends Rest
 
                 $update['status'] = $transaction_live_data['status'];
 
-                $this->Firstgiving_model->update_donation_transaction_by_transaction_id($update,array('transaction_id' => $transactionId));
+                $this->Firstgiving_model->update_donation_transaction_by_transaction_id($update, array('transaction_id' => $transactionId));
             }  
         }
 
@@ -155,7 +155,7 @@ class FirstGiving extends Rest
 
             $update['status'] = $transaction_live_data['status'];
 
-            $this->Firstgiving_model->update_donation_transaction_by_transaction_id($update,array('transaction_id' => $transactionId));
+            $this->Firstgiving_model->update_donation_transaction_by_transaction_id($update, array('transaction_id' => $transactionId));
         }  
         
         $data['error'] = false;
@@ -188,8 +188,8 @@ class FirstGiving extends Rest
         }
 
         $page = ($this->input->get('page'))?$this->input->get('page'):1;
-        // $limit = ($this->input->get('limit'))?$this->input->get('limit'):10;
-        $limit = 10;
+        $limit = ($this->input->get('limit'))?$this->input->get('limit'):10;
+        // $limit = 10;
         $offset=($page-1)*$limit;
         $refund_status = ($this->input->get('refundStatus'))?$this->input->get('refundStatus'):'';
         $ngo_id = ($this->input->get('ngoId'))?$this->input->get('ngoId'):'';
@@ -224,6 +224,8 @@ class FirstGiving extends Rest
 
         $where = array('donor_transactions.id'=>$id);
         $transaction_data = $this->Firstgiving_model->get_donation_transaction($where);
+        // var_dump($transaction_data);
+        // die;
         $transaction_details['id'] = $transaction_data->id;
         $transaction_details['ngoName'] = $transaction_data->ngo_name;
         $transaction_details['paymentGateway'] = $transaction_data->payment_gateway;
@@ -247,6 +249,9 @@ class FirstGiving extends Rest
         $transaction_details['currencyCode'] = $transaction_data->currency_code;
         $transaction_details['refundStaus'] = (bool)$transaction_data->refund_status;
         $transaction_details['status'] = $transaction_data->status;
+        $transaction_details['isRecurring'] = (bool)$transaction_data->is_recurring;
+        $transaction_details['recurringBillingFrequency'] = $transaction_data->recurring_billing_frequency;
+        $transaction_details['recurringBillingTerm'] = $transaction_data->recurring_billing_term;
         
         return $transaction_details;
     }
@@ -265,7 +270,7 @@ class FirstGiving extends Rest
             echo json_encode($data,JSON_NUMERIC_CHECK);
             exit;
         }
-        $ngo_data = $this->Ngo_model->organization_details($ngo_id,'any');
+        $ngo_data = $this->Ngo_model->organization_details($ngo_id, 'any');
         if(empty($ngo_data))
         {
             header('HTTP/1.1 404 Not Found');
@@ -386,9 +391,9 @@ class FirstGiving extends Rest
         $audit_info['entity'] = 'donation setup';
         $audit_info['entity_id'] = $ngo_id;
         $audit_info['action'] = 'updated';
-        $audit_id = $this->Audit_model->update_audit($old_data,$new_data,$audit_info);
+        $audit_id = $this->Audit_model->update_audit($old_data, $new_data, $audit_info);
 
-        $this->Ngo_model->update_ngo($update,$ngo_id);
+        $this->Ngo_model->update_ngo($update, $ngo_id);
 
         if($audit_id!='false')
             $this->Audit_model->activate_audit($audit_id);
@@ -400,7 +405,7 @@ class FirstGiving extends Rest
             if($application_details->doc_url=='' || $application_details->doc_url==NULL)
             {
                 $application_update['is_active'] = 0;
-                $this->Firstgiving_model->update_application($application_update,$application_details->id);
+                $this->Firstgiving_model->update_application($application_update, $application_details->id);
             }
         }
 
@@ -464,9 +469,9 @@ class FirstGiving extends Rest
         $audit_info['entity'] = 'donation setup';
         $audit_info['entity_id'] = $ngo_id;
         $audit_info['action'] = 'updated';
-        $audit_id = $this->Audit_model->update_audit($old_data,$jsonArray,$audit_info);
+        $audit_id = $this->Audit_model->update_audit($old_data, $jsonArray, $audit_info);
 
-        $this->Ngo_model->update_ngo($update,$ngo_id);
+        $this->Ngo_model->update_ngo($update, $ngo_id);
 
         if($audit_id!='false')
             $this->Audit_model->activate_audit($audit_id);
@@ -700,7 +705,7 @@ class FirstGiving extends Rest
         $audit_info['entity'] = 'donation application';
         $audit_info['entity_id'] = $ngo_id;
         $audit_info['action'] = 'added';
-        $audit_id = $this->Audit_model->create_audit($jsonArray,$audit_info);
+        $audit_id = $this->Audit_model->create_audit($jsonArray, $audit_info);
 
         $id = $this->Firstgiving_model->store_application($insert);
 
@@ -965,7 +970,7 @@ class FirstGiving extends Rest
         $audit_info['entity'] = 'donation application';
         $audit_info['entity_id'] = $ngo_id;
         $audit_info['action'] = 'updated';
-        $audit_id = $this->Audit_model->update_audit($old_data,$jsonArray,$audit_info);
+        $audit_id = $this->Audit_model->update_audit($old_data, $jsonArray, $audit_info);
 
         $this->Firstgiving_model->update_application($update, $id);
 
@@ -1276,7 +1281,7 @@ class FirstGiving extends Rest
 
         $insert['ngo_id'] = $ngo_id;
 
-        $ngo_data = $this->Ngo_model->organization_details($ngo_id,'any');
+        $ngo_data = $this->Ngo_model->organization_details($ngo_id, 'any');
         if(empty($ngo_data))
         {
             $data['error'] = true;
@@ -1469,7 +1474,7 @@ class FirstGiving extends Rest
                 $error = $ret['firstGivingResponse']['@attributes']['verboseErrorMessage'];
 
             $update['last_refund_error'] = json_encode($ret);
-            $this->Firstgiving_model->update_donation_transaction($update,$transaction_data->id);
+            $this->Firstgiving_model->update_donation_transaction($update, $transaction_data->id);
 
             $data['error'] = true;
             $data['status'] = 400;
@@ -1491,7 +1496,7 @@ class FirstGiving extends Rest
         
         $update['refund_status'] = 1;
         $update['status'] = 'Awaiting Refund';
-        $this->Firstgiving_model->update_donation_transaction($update,$transaction_data->id);
+        $this->Firstgiving_model->update_donation_transaction($update, $transaction_data->id);
 
         $data['error'] = false;
         $data['resp'] = 'Successful.';

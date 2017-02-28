@@ -44,13 +44,13 @@ class FirstGiving_model extends CI_Model
         return $result->row();
     }
 
-    public function update_application($update,$application_id)
+    public function update_application($update, $application_id)
     {
         $this->db->update('donation_applications', $update, array('id' => $application_id));
         return;
     }
 
-    public function update_ngo($update,$id)
+    public function update_ngo($update, $id)
     {
         $this->db->where('id', $id);
         $this->db->update('organisation', $update);
@@ -78,7 +78,7 @@ class FirstGiving_model extends CI_Model
 
     public function store_email_notification_log($insert)
     {
-        $this->db->insert('karma_donation_notification_mail_logs', $insert); 
+        $this->db->insert('mail_logs', $insert); 
         return $this->db->insert_id();
     }
 
@@ -160,13 +160,13 @@ class FirstGiving_model extends CI_Model
         return $result->row();
     }
 
-    public function update_donation_transaction($update,$id)
+    public function update_donation_transaction($update, $id)
     {
         $this->db->update('donor_transactions', $update, array('id' => $id));
         return;
     }
 
-    public function update_donation_transaction_by_transaction_id($update,$where)
+    public function update_donation_transaction_by_transaction_id($update, $where)
     {
         $this->db->update('donor_transactions', $update, $where);
         return;

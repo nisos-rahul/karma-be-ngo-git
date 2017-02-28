@@ -112,7 +112,7 @@ class Audit_model extends CI_Model
         return $result->row(); 
     }
 
-    public function check_diff($old_data,$new_data)
+    public function check_diff($old_data, $new_data)
     {
         $CI = get_instance();
         $CI->load->helper('array_diff');
@@ -128,14 +128,14 @@ class Audit_model extends CI_Model
         return $result->result();
     }
 
-    public function get_ui_key($key,$entity)
+    public function get_ui_key($key, $entity)
     {
         $query = "select ui_key from audit_keys where backend_key='$key' and entity='$entity' limit 1";
         $result = $this->db->query($query);
         return $result->row();
     }
 
-    public function change_keys($old_changes,$entity)
+    public function change_keys($old_changes, $entity)
     {
         $keys_data = $this->get_keys($entity);
 
@@ -171,7 +171,7 @@ class Audit_model extends CI_Model
     }
 
     //ngo, project, activity, donor update
-    public function update_audit($old_data,$new_data,$audit_info)
+    public function update_audit($old_data, $new_data, $audit_info)
     {
         $old_data = json_decode(json_encode($old_data),true);
         $new_data = json_decode(json_encode($new_data),true);
@@ -202,7 +202,7 @@ class Audit_model extends CI_Model
     }
 
     //project, user status update
-    public function update_audit_2($old_data,$new_data,$audit_info) 
+    public function update_audit_2($old_data, $new_data, $audit_info) 
     {
         $old_data = json_decode(json_encode($old_data),true);
         $new_data = json_decode(json_encode($new_data),true);
@@ -234,7 +234,7 @@ class Audit_model extends CI_Model
     }
 
     //media caption update
-    public function update_audit_3($old_data,$new_data,$audit_info)
+    public function update_audit_3($old_data, $new_data, $audit_info)
     {
         $old_data = json_decode(json_encode($old_data),true);
         $new_data = json_decode(json_encode($new_data),true);
@@ -264,7 +264,7 @@ class Audit_model extends CI_Model
 
     //----------------------------------------------------
     //create project, activity,activity media, donor
-    public function create_audit($new_data,$audit_info)
+    public function create_audit($new_data, $audit_info)
     {
         $entity = $audit_info['entity'];
         $changes = $this->change_keys($new_data,$entity);
@@ -287,7 +287,7 @@ class Audit_model extends CI_Model
 
     //--------------------------------------------------------
     //delete outcome, activity,activity media, donor
-    public function delete_audit($old_data,$audit_info)
+    public function delete_audit($old_data, $audit_info)
     {
         $old_data = json_decode(json_encode($old_data),true);
         $entity = $audit_info['entity'];
@@ -393,7 +393,7 @@ class Audit_model extends CI_Model
         return;
     }
 
-    public function get_audits($offset,$limit) {
+    public function get_audits($offset, $limit) {
         $query="select * from audits where is_active=1 ORDER BY id desc limit $offset,$limit";
         $result = $this->db->query($query);
         return $result->result();

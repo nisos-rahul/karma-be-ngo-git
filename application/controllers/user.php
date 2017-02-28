@@ -368,8 +368,8 @@ class User extends Rest
                         return;
                     }
 
-                    $valid_ngo_user = $this->Ngo_model->ngo_user_check($ngoId,$id);
-                    $valid_admin = $this->Ngo_model->ngo_admin_check($ngoId,$id);
+                    $valid_ngo_user = $this->Ngo_model->ngo_user_check($ngoId, $id);
+                    $valid_admin = $this->Ngo_model->ngo_admin_check($ngoId, $id);
                     if(empty($valid_ngo_user) && empty($valid_admin))
                     {
                         header('HTTP/1.1 401 Unauthorized');
@@ -394,7 +394,7 @@ class User extends Rest
                 {
                     $ngo_id = $organisation->id;
                     //check user belongs to ngo
-                    $valid_id = $this->Ngo_model->ngo_user_check($ngo_id,$id);
+                    $valid_id = $this->Ngo_model->ngo_user_check($ngo_id, $id);
                     if(empty($valid_id))
                     {
                         header('HTTP/1.1 401 Unauthorized');
@@ -423,7 +423,7 @@ class User extends Rest
             {   
                 
                 //check duplicate email
-                $dupEmail = $this->User_model->update_user_email_duplicate($email,$id);
+                $dupEmail = $this->User_model->update_user_email_duplicate($email, $id);
                 if(!empty($dupEmail))
                 {
                     $data['error'] = true;
@@ -433,7 +433,7 @@ class User extends Rest
                     return $data;
                 }
                 //check duplicate username
-                $dupUsername = $this->User_model->update_username_duplicate($username,$id);
+                $dupUsername = $this->User_model->update_username_duplicate($username, $id);
                 if(!empty($dupUsername))
                 {
                     $data['error'] = true;
@@ -445,7 +445,7 @@ class User extends Rest
                 $update['username'] = $username;
                 $update['email'] = $email;
                 $update['salt'] = $email;
-                $this->User_model->update_user($update,$id);
+                $this->User_model->update_user($update, $id);
 
                 //check entry in profile
                 $profile_data = $this->User_model->profile_info($id);
@@ -461,7 +461,7 @@ class User extends Rest
                     //update profile
                     $profile_id = $profile_data->id;
                     $insert_profile['last_updated'] = date('Y-m-d H:i:s');
-                    $this->User_model->profile_update($insert_profile,$profile_id);
+                    $this->User_model->profile_update($insert_profile, $profile_id);
                 }   
                 $data = $this->get_profile($id);
                 return $data;
@@ -600,7 +600,7 @@ class User extends Rest
             return;
         }
         //check user belongs to ngo
-        $valid_id = $this->Ngo_model->ngo_user_check($ngo_id,$id);
+        $valid_id = $this->Ngo_model->ngo_user_check($ngo_id, $id);
         if(empty($valid_id))
         {
             header('HTTP/1.1 401 Unauthorized');
@@ -638,9 +638,9 @@ class User extends Rest
             $audit_info['action'] = 'updated';
             $audit_info['target_user_id'] = $id;
             $user_data = $this->get_profile($id);
-            $audit_id = $this->Audit_model->update_audit_2($user_data['resp'],$jsonArray,$audit_info);
+            $audit_id = $this->Audit_model->update_audit_2($user_data['resp'], $jsonArray, $audit_info);
             
-            $this->User_model->update_user($update,$id);
+            $this->User_model->update_user($update, $id);
 
             if(isset($audit_id))                
             $this->Audit_model->activate_audit($audit_id);

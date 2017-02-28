@@ -9,9 +9,9 @@ class Kraken_model extends CI_Model
         return $id;
     }
 
-    public function update_kraken_log($update,$where)
+    public function update_kraken_log($update, $where)
     {
-    	$this->db->update('kraken_logs', $update,$where); 
+    	$this->db->update('kraken_logs', $update, $where); 
         return;
     }
 }

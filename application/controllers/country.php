@@ -7,45 +7,47 @@ class Country extends Rest
     {
         parent::__construct();      
         $this->load->model('Country_model');
-        $auth_token = $this->input->server('HTTP_X_AUTH_TOKEN');
-        $valid_auth_token = $this->Verification_model->valid_auth_token($auth_token);
-        if(empty($valid_auth_token))
+        if($this->input->server('HTTP_X_AUTH_TOKEN'))
         {
-            $data['error'] = true;
-            $data['status'] = 401;
-            $data['message'] = "Unauthorized User.";
-            header('HTTP/1.1 401 Unauthorized User');
-            echo json_encode($data,JSON_NUMERIC_CHECK);
-            exit;
-        }
-        $role_id = $valid_auth_token->role_id;      
-        //if ngo admin or member then only check for ngo
-        if($role_id==1 || $role_id==4 || $role_id==5 || $role_id==7)
-        {
-            if($role_id==4 || $role_id==5)
+            $auth_token = $this->input->server('HTTP_X_AUTH_TOKEN');
+            $valid_auth_token = $this->Verification_model->valid_auth_token($auth_token);
+            if(empty($valid_auth_token))
             {
-                $ngo_id = login_ngo_details($auth_token);       
-                if(empty($ngo_id))
+                $data['error'] = true;
+                $data['status'] = 401;
+                $data['message'] = "Unauthorized User.";
+                header('HTTP/1.1 401 Unauthorized User');
+                echo json_encode($data,JSON_NUMERIC_CHECK);
+                exit;
+            }
+            $role_id = $valid_auth_token->role_id;      
+            //if ngo admin or member then only check for ngo
+            if($role_id==1 || $role_id==4 || $role_id==5 || $role_id==7)
+            {
+                if($role_id==4 || $role_id==5)
                 {
-                    $data['error'] = true;
-                    $data['status'] = 401;
-                    $data['message'] = "Unauthorized User.";
-                    header('HTTP/1.1 401 Unauthorized User');
-                    echo json_encode($data,JSON_NUMERIC_CHECK);
-                    exit;
+                    $ngo_id = login_ngo_details($auth_token);       
+                    if(empty($ngo_id))
+                    {
+                        $data['error'] = true;
+                        $data['status'] = 401;
+                        $data['message'] = "Unauthorized User.";
+                        header('HTTP/1.1 401 Unauthorized User');
+                        echo json_encode($data,JSON_NUMERIC_CHECK);
+                        exit;
+                    }
                 }
             }
+            else
+            {
+                $data['error'] = true;
+                $data['status'] = 401;
+                $data['message'] = "Unauthorized User.";
+                header('HTTP/1.1 401 Unauthorized User');
+                echo json_encode($data,JSON_NUMERIC_CHECK);
+                exit;
+            }
         }
-        else
-        {
-            $data['error'] = true;
-            $data['status'] = 401;
-            $data['message'] = "Unauthorized User.";
-            header('HTTP/1.1 401 Unauthorized User');
-            echo json_encode($data,JSON_NUMERIC_CHECK);
-            exit;
-        }
-        
     }
     //fetch country list
     public function list_all()
@@ -55,7 +57,7 @@ class Country extends Rest
         $page = ($this->input->get('page'))?$this->input->get('page'):1;
         $limit = ($this->input->get('limit'))?$this->input->get('limit'):10;
         $offset=($page-1)*$limit;           
-        $list = $this->Country_model->country_list($query,$offset,$limit);
+        $list = $this->Country_model->country_list($query, $offset, $limit);
         $data['error'] = false;  
         $data['resp'] = array();
         $count = $this->Country_model->country_count($query);
@@ -85,6 +87,15 @@ class Country extends Rest
     //fetch country details
     public function get_country($id=0)
     {
+        if(!$this->input->server('HTTP_X_AUTH_TOKEN'))
+        {
+            $data['error'] = true;
+            $data['status'] = 401;
+            $data['message'] = "Unauthorized User.";
+            header('HTTP/1.1 401 Unauthorized User');
+            echo json_encode($data,JSON_NUMERIC_CHECK);
+            exit;
+        }
         $country_details = $this->Country_model->country_info($id);
         if(!empty($country_details))
         {
@@ -105,6 +116,15 @@ class Country extends Rest
     //fetch state details
     public function get_state($id=0)
     {
+        if(!$this->input->server('HTTP_X_AUTH_TOKEN'))
+        {
+            $data['error'] = true;
+            $data['status'] = 401;
+            $data['message'] = "Unauthorized User.";
+            header('HTTP/1.1 401 Unauthorized User');
+            echo json_encode($data,JSON_NUMERIC_CHECK);
+            exit;
+        }
         $state_details = $this->Country_model->state_info($id);
         if(!empty($state_details))
         {
@@ -124,6 +144,15 @@ class Country extends Rest
     //fetch city details
     public function get_city($id=0)
     {
+        if(!$this->input->server('HTTP_X_AUTH_TOKEN'))
+        {
+            $data['error'] = true;
+            $data['status'] = 401;
+            $data['message'] = "Unauthorized User.";
+            header('HTTP/1.1 401 Unauthorized User');
+            echo json_encode($data,JSON_NUMERIC_CHECK);
+            exit;
+        }
         $city_details = $this->Country_model->city_info($id);
         if(!empty($city_details))
         {
@@ -141,8 +170,40 @@ class Country extends Rest
         return;
     }//get_state
 
+    public function get_country_id_by_name()
+    {
+        $country_name = $this->input->get('name');
+        $country_name = str_replace('-', ' ', $country_name);
+        if($country_name===false)
+        {
+            header('HTTP/1.1 404 Not Found');
+            return;
+        }
+        $country_details = $this->Country_model->get_country_info(array('name'=>$country_name));
+        if(empty($country_details))
+        {
+            header('HTTP/1.1 404 Not Found');
+            return;
+        }
+        $data['error'] = false;
+        $data['resp']['id'] = (float)$country_details->id;
+        $data['resp']['category'] = $country_details->name;
+        $data['resp']['countryCode'] = $country_details->code;
+        echo json_encode($data,JSON_NUMERIC_CHECK);
+        return;
+    }
+
     public function insert_country_flag()
     {
+        if(!$this->input->server('HTTP_X_AUTH_TOKEN'))
+        {
+            $data['error'] = true;
+            $data['status'] = 401;
+            $data['message'] = "Unauthorized User.";
+            header('HTTP/1.1 401 Unauthorized User');
+            echo json_encode($data,JSON_NUMERIC_CHECK);
+            exit;
+        }
         $base_url = $this->config->item('customer_url');
         if($base_url=='')
         {

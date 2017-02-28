@@ -34,7 +34,7 @@ class Donor_model extends CI_Model
         return $result->result();
     }
 
-    public function donor_list($ngo_id,$search,$status,$offset,$limit)
+    public function donor_list($ngo_id, $search, $status, $offset, $limit)
     {
         $this->db->select('donor.*, organisation.name as organisation_name'); 
         $this->db->from('donor');
@@ -57,7 +57,7 @@ class Donor_model extends CI_Model
         return $result;
     }
 
-    public function donor_count($ngo_id,$search,$status)
+    public function donor_count($ngo_id, $search, $status)
     {
         $this->db->select('count(*) as num'); 
         $this->db->from('donor');
@@ -79,7 +79,7 @@ class Donor_model extends CI_Model
         return $result->num;
     }
 
-    public function update_donor($insert,$id)
+    public function update_donor($insert, $id)
     {
         $this->db->update('donor', $insert,array('id'=>$id)); 
         return;
@@ -88,5 +88,42 @@ class Donor_model extends CI_Model
     public function delete_donor_projects($donor_id)
     {
         $this->db->delete('donor_projects', array('donor_id' => $donor_id)); 
+    }
+
+    public function all_donors_list($search, $offset, $limit)
+    {
+        $this->db->select('donor.*, organisation.name as organisation_name'); 
+        $this->db->from('donor');
+        $this->db->join('organisation', 'organisation.id = donor.organisation_id');
+        $this->db->where('donor.is_deleted', 0);
+        $this->db->where('organisation.is_deleted', 0);
+        $this->db->where('organisation.is_active', 1);
+        $this->db->where('organisation.is_archive', 0);
+        if($search!='')
+            $this->db->like('donor.name', $search);
+
+        $this->db->order_by("donor.last_updated", "desc");
+        $this->db->limit($limit,$offset);
+
+        $query = $this->db->get();
+        $result = $query->result();
+        return $result;
+    }
+
+    public function all_donors_count($search)
+    {
+        $this->db->select('count(*) as num'); 
+        $this->db->from('donor');
+        $this->db->join('organisation', 'organisation.id = donor.organisation_id');
+        $this->db->where('donor.is_deleted', 0);
+        $this->db->where('organisation.is_deleted', 0);
+        $this->db->where('organisation.is_active', 1);
+        $this->db->where('organisation.is_archive', 0);
+        if($search!='')
+            $this->db->like('donor.name', $search);
+
+        $query = $this->db->get();
+        $result = $query->row();
+        return $result->num;
     }
 }

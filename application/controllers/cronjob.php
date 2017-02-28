@@ -3,6 +3,7 @@
 require APPPATH.'libraries/PHPExcel_1.8.0_doc/Classes/PHPExcel.php';
 require APPPATH.'libraries/PHPExcel_1.8.0_doc/Classes/PHPExcel/Writer/Excel2007.php';
 require APPPATH.'libraries/aws-autoloader.php';
+// require APPPATH.'libraries/Sitemap.php';
 
 class Cronjob extends CI_Controller 
 {
@@ -12,9 +13,14 @@ class Cronjob extends CI_Controller
         $this->load->model('Ngo_model');
         $this->load->model('Project_model');
         $this->load->model('Activity_model');
+        $this->load->model('Routing_model');
         $this->load->model('Firstgiving_model');
     }
-
+ function demo()
+ {
+    echo "demo";
+    die;
+ }
     function nightlyreport()
     {
         if (!$this->input->is_cli_request()) show_error('Direct access is not allowed');
@@ -57,7 +63,8 @@ class Cronjob extends CI_Controller
             foreach($ngo_list as $ngo)
             {
                 $project_data = array();
-                $project_list = $this->Project_model->get_project_list(array('ngo_id'=>$ngo->id, 'is_active'=>1));
+
+                $project_list = $this->Project_model->get_all_project_list(array('ngo_id'=>$ngo->id, 'is_active'=>1));
 
                 if(!empty($project_list))
                 {
@@ -103,7 +110,7 @@ class Cronjob extends CI_Controller
             $j = 0;
             foreach($ngo_list as $ngo)
             {
-                $project_list = $this->Project_model->get_project_list(array('ngo_id'=>$ngo->id, 'is_active'=>1));
+                $project_list = $this->Project_model->get_all_project_list(array('ngo_id'=>$ngo->id, 'is_active'=>1));
                 $total_update_count = 0;
                 if(!empty($project_list))
                 {
@@ -160,7 +167,7 @@ class Cronjob extends CI_Controller
             $ngo_data = array();
             foreach($ngo_list as $ngo)
             {
-                $project_list = $this->Project_model->get_project_list(array('ngo_id'=>$ngo->id, 'is_active'=>1));
+                $project_list = $this->Project_model->get_all_project_list(array('ngo_id'=>$ngo->id, 'is_active'=>1));
                 $total_update_count = 0;
                 if(!empty($project_list))
                 {
@@ -180,13 +187,12 @@ class Cronjob extends CI_Controller
             $data4[$first_week_duration_statement]['total_count'] = $total_weekly_count;
             $data4[$first_week_duration_statement]['ngo'] = $ngo_data;
 
-
             $j = 0;
             $total_weekly_count = 0; 
             $ngo_data = array();
             foreach($ngo_list as $ngo)
             {
-                $project_list = $this->Project_model->get_project_list(array('ngo_id'=>$ngo->id, 'is_active'=>1));
+                $project_list = $this->Project_model->get_all_project_list(array('ngo_id'=>$ngo->id, 'is_active'=>1));
                 
                 $total_update_count = 0;
                 if(!empty($project_list))

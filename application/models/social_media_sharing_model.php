@@ -17,7 +17,7 @@ class Social_media_sharing_model extends CI_Model
         return $this->db->insert_id();
     }
 
-    public function update_user_data($update,$where)
+    public function update_user_data($update, $where)
     {
         $this->db->update('user_social', $update, $where);
         return;

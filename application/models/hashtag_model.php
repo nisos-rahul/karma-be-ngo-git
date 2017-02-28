@@ -2,7 +2,7 @@
 
 class Hashtag_model extends CI_Model
 {
-    public function all_default_hashtags($search='',$offset='',$limit='')
+    public function all_default_hashtags($search='', $offset='', $limit='')
     {
         $query = "select id, hash_tag as hashTag from hash_tags where is_active=1";
         if(!empty($search))
@@ -62,7 +62,7 @@ class Hashtag_model extends CI_Model
         return $result->result();
     }//get_organization_handles
     
-    public function check_handle_unique($handleName,$organization_id='')
+    public function check_handle_unique($handleName, $organization_id='')
     {
         $query = "select * from twitter_handles where  
         handle_name='$handleName' ";
@@ -130,7 +130,7 @@ class Hashtag_model extends CI_Model
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function check_facebook_handle_unique($handleName,$organization_id='')
+    public function check_facebook_handle_unique($handleName, $organization_id='')
     {
         $query = "select * from facebook_handles where  
         handle_name='$handleName' ";
@@ -163,7 +163,7 @@ class Hashtag_model extends CI_Model
         $result = $this->db->query($query);
         return $result->result();
     }//get_organization_handles
-    public function get_handle_details($table,$where)
+    public function get_handle_details($table, $where)
     {
         $this->db->select('*');
         $this->db->where($where);       

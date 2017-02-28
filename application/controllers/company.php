@@ -27,7 +27,7 @@ class Company extends Rest
         $page = ($this->input->get('page'))?$this->input->get('page'):'';
         $limit = ($this->input->get('limit'))?$this->input->get('limit'):'';
         $offset=($page-1)*$limit;   
-        $list = $this->Company_model->company_list($query,$offset,$limit);
+        $list = $this->Company_model->company_list($query, $offset, $limit);
         $data['error'] = false;  
         $data['resp'] = array();
         $count = $this->Company_model->company_count($query);
@@ -78,8 +78,8 @@ class Company extends Rest
             exit;
         }
         //fetch all projects of ngo
-        $project_list = $this->Project_model->project_list($ngo_id,$query,1,$offset,$limit);
-        $data['resp']['count']  = $this->Project_model->project_list_count($ngo_id,$query,1)->num;
+        $project_list = $this->Project_model->project_list($ngo_id, $query, 1, $offset, $limit);
+        $data['resp']['count']  = $this->Project_model->project_list_count($ngo_id, $query, 1)->num;
         $project_data = array();
         if(!empty($project_list))
         {
@@ -89,7 +89,7 @@ class Company extends Rest
                 $project_data[$p]['id']  = $project_id = $projects->id;
                 $project_data[$p]['name']  = $projects->title;
                 //company list
-                $company_list = $this->Project_model->company_project_list($ngo_id,$project_id);
+                $company_list = $this->Project_model->company_project_list($ngo_id, $project_id);
                 $temp = array();
                 $temp2 = array();
                 $temp3 = array();
@@ -155,7 +155,7 @@ class Company extends Rest
             return; 
         }
         //check active project or not
-        $project_exists = $this->Company_model->active_ngo_project_details($project_id,$ngo_id);
+        $project_exists = $this->Company_model->active_ngo_project_details($project_id, $ngo_id);
         if(empty($project_exists))
         {
             $data['error'] = true;
@@ -190,7 +190,7 @@ class Company extends Rest
             if(!empty($company_id))
             {
                 //check entry in company_ngo
-                $comp_ngo  = $this->Company_model->project_company_details($company_id,$ngo_id,$project_id);
+                $comp_ngo  = $this->Company_model->project_company_details($company_id, $ngo_id, $project_id);
                 if(!empty($comp_ngo))
                 {
                     $relationship_status = $comp_ngo->relationship_status;
@@ -200,7 +200,7 @@ class Company extends Rest
                         //update status to requested
                         $update['date_created'] = $update['last_updated'] = date('Y-m-d H:i:s');
                         $update['relationship_status'] = 'Requested';
-                        $this->Company_model->update_company_ngo($update,$company_id,$ngo_id,$project_id);
+                        $this->Company_model->update_company_ngo($update, $company_id, $ngo_id, $project_id);
                     }//if already connected do not send request
                 }//if not empty then update
                 else{
@@ -229,7 +229,7 @@ class Company extends Rest
         $this->send_invitation_user($project_id,$ngo_id,$final_company);
         return;
     }//
-    protected function send_invitation_user($project_id,$ngo_id,$final_company)
+    protected function send_invitation_user($project_id, $ngo_id, $final_company)
     {
         $this->config->load('email_setting');
         $config = array(
@@ -258,7 +258,7 @@ class Company extends Rest
         {
             //fetch id from dba_close
             $company_id=$final_company[$i];
-            $comapny_ngo = $this->Company_model->project_company_details($company_id,$ngo_id,$project_id);
+            $comapny_ngo = $this->Company_model->project_company_details($company_id, $ngo_id, $project_id);
             $id = $comapny_ngo->id;
             $link = $this->config->item('corporate_url');           
             $ngo_name = $this->Company_model->organisation_name($ngo_id)->name;

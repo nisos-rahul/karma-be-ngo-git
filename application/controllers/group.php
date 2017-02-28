@@ -30,10 +30,10 @@ class Group extends Rest
         $limit = ($this->input->get('limit'))?$this->input->get('limit'):10;
         $offset=($page-1)*$limit;           
         $query = ($this->input->get('query'))?$this->input->get('query'):'';
-        $count = $this->Company_model->list_group_company_count($ngo_id,$query);
+        $count = $this->Company_model->list_group_company_count($ngo_id, $query);
         $data['error'] = false;
         $group = array();
-        $group_list = $this->Company_model->list_group_company($ngo_id,$query,$offset,$limit);
+        $group_list = $this->Company_model->list_group_company($ngo_id, $query, $offset, $limit);
         if(!empty($group_list))
         {
             $g = 0;
@@ -117,12 +117,13 @@ class Group extends Rest
         flush(); // yes, you need to call all 3 flushes!
         //update group table with current message
         $update['notification'] = $message;
-        $this->Company_model->update_group($update,$group_id);
+        $this->Company_model->update_group($update, $group_id);
         //send this message to all members  
-        $this->send_notification_mail($group_id,$message,$project_name);
+        $this->send_notification_mail($group_id, $message, $project_name);
         return;
     }
-    protected function send_notification_mail($group_id,$message,$project_name)
+    protected function send_notification_mail($group_id, $message,
+        $project_name)
     {
         $this->config->load('email_setting');
         $config = array(

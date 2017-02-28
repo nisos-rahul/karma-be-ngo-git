@@ -59,7 +59,7 @@ class Invitation extends Rest
             //update relationship_status to Approved
             $update['last_updated'] = date('Y-m-d H:i:s');
             $update['relationship_status'] = 'Approved';
-            $this->Company_model->update_company_ngo($update,$company_id,$ngo_id,$project_id);
+            $this->Company_model->update_company_ngo($update, $company_id, $ngo_id, $project_id);
             $project_name = $project_details->title;
             //check group created or not if not then create otherwise add company to group
             $group_exists = $this->Company_model->check_group_exists($project_id);
@@ -116,7 +116,7 @@ class Invitation extends Rest
             //update relationship_status to Declined
             $update['relationship_status'] = 'Declined';
             $update['last_updated'] = date('Y-m-d H:i:s');
-            $this->Company_model->update_company_ngo($update,$company_id,$ngo_id,$project_id);
+            $this->Company_model->update_company_ngo($update, $company_id, $ngo_id, $project_id);
             return;
         }
         else

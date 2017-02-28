@@ -39,7 +39,7 @@ class Project_model extends CI_Model
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function outcome_list($id,$search='',$offset='',$limit='')
+    public function outcome_list($id,$search='', $offset='', $limit='')
     {
         $query = "select * from goals where project_id = $id and is_deleted=0";
         if($search!="")
@@ -60,7 +60,7 @@ class Project_model extends CI_Model
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function company_project_list_approved($ngo_id,$project_id)
+    public function company_project_list_approved($ngo_id, $project_id)
     {
         $query = "SELECT organisation.*,company_ngo.relationship_status FROM `organisation` join company_ngo 
         on company_ngo.company_id = organisation.id 
@@ -68,20 +68,20 @@ class Project_model extends CI_Model
         $result = $this->db->query($query);
         return $result->result();
     }
-    public function company_project_list($ngo_id,$project_id)
+    public function company_project_list($ngo_id, $project_id)
     {
         $query = "SELECT organisation.*,company_ngo.relationship_status FROM `organisation` join company_ngo on company_ngo.company_id = organisation.id 
         where company_ngo.ngo_id=$ngo_id and company_ngo.project_id=$project_id ";
         $result = $this->db->query($query);
         return $result->result();
     }
-    public function company_project_fund($comp_id,$project_id)
+    public function company_project_fund($comp_id, $project_id)
     {
         $query = "select funds from project_funding where company_id=$comp_id and project_id=$project_id limit 1";
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function project_list($ngo_id,$search,$status,$offset,$limit)
+    public function project_list($ngo_id, $search, $status, $offset, $limit)
     {
         $this->db->select('*'); 
         $this->db->from('project');
@@ -116,7 +116,7 @@ class Project_model extends CI_Model
         $result = $query->result();
         return $result;
     }
-    public function project_list_count($ngo_id,$search,$status)
+    public function project_list_count($ngo_id, $search, $status)
     {
         $this->db->select('count(*) as num'); 
         $this->db->from('project');
@@ -146,7 +146,7 @@ class Project_model extends CI_Model
         return $result;
     }
 
-    public function active_project_count($ngo_id,$project_req)
+    public function active_project_count($ngo_id, $project_req)
     {
         $query = "select count(*) as num from project where ngo_id=$ngo_id ";
         if($project_req=='active')
@@ -158,12 +158,12 @@ class Project_model extends CI_Model
         return $result->row();
     }
 
-    public function update_project($update,$id)
+    public function update_project($update, $id)
     {
         $this->db->update('project', $update, array('id' => $id));
         return true;
     }
-    public function project_ngo($ngo_id,$id)
+    public function project_ngo($ngo_id, $id)
     {
         $query = "select id from project where ngo_id=$ngo_id and id=$id";
         $result = $this->db->query($query);
@@ -181,13 +181,13 @@ class Project_model extends CI_Model
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function check_project_funding($companyId,$id)
+    public function check_project_funding($companyId, $id)
     {
         $query = "select * from project_funding where company_id=$companyId and project_id=$id limit 1";
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function update_project_funding($update,$id)
+    public function update_project_funding($update, $id)
     {
         $this->db->update('project_funding',$update,array('id'=>$id));
     }
@@ -196,7 +196,7 @@ class Project_model extends CI_Model
         $this->db->insert('project_funding',$insert);
         return;
     }
-    public function active_outcome_count($id,$search='')
+    public function active_outcome_count($id, $search='')
     {
         $query = "select count(*) as num from goals where project_id = $id and is_deleted=0";
         if($search!="")
@@ -206,7 +206,7 @@ class Project_model extends CI_Model
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function project_goal_check($id,$project_id)
+    public function project_goal_check($id, $project_id)
     {
         $query = "select * from goals where id='$id' and project_id=$project_id limit 1";
         $result = $this->db->query($query);
@@ -235,7 +235,7 @@ class Project_model extends CI_Model
         return $result->row();
     }
     //update beneficiaries of ngo
-    public function update_organisation($update,$ngo_id)
+    public function update_organisation($update, $ngo_id)
     {
         $this->db->update('organisation',$update,array('id'=>$ngo_id));
         return;
@@ -293,7 +293,104 @@ class Project_model extends CI_Model
         return $result->result();
     }
 
+//////////////////////
+    public function get_project_details($where)
+    {
+        $this->db->select('*');
+        $this->db->where($where);
+        $result = $this->db->get('project');
+        return $result->row();
+    }
 
+    public function get_project_list($limit, $offset, $query, $status, $country_id, $category_id, $ngo_id)
+    {
+        $this->db->distinct();
+        $this->db->select('project.*'); 
+        $this->db->from('project');
+        $this->db->join('project_country_state', 'project_country_state.project_id = project.id');
+        $this->db->join('goals', 'goals.project_id = project.id');
+        if($country_id!='')
+        {
+            $this->db->where('project_country_state.country_id', $country_id);
+        }
+        if($category_id!='')
+        {
+            $this->db->where('goals.categories_id', $category_id);
+            $this->db->where('goals.is_deleted', 0);
+        }
+        if($query!='')
+        {
+            $this->db->like('project.title', $query);
+        }
+        if($status!='')
+        {
+            $this->db->where('project.status_name', $status);
+        }
+        if($ngo_id!='')
+        {
+            $this->db->where('project.ngo_id', $ngo_id);
+        }
+        $this->db->where('project.is_active', 1);
+        $this->db->order_by("project.status_name", "desc");
+        $this->db->order_by("project.id", "desc");
+        $this->db->limit($limit, $offset);
+
+        $query = $this->db->get();
+        $result = $query->result();
+        return $result;
+    }
+
+    public function get_project_list_count($query, $status, $country_id, $category_id, $ngo_id)
+    {
+        $this->db->distinct();
+        $this->db->select('project.*');
+        $this->db->from('project');
+        $this->db->join('project_country_state', 'project_country_state.project_id = project.id');
+        $this->db->join('goals', 'goals.project_id = project.id');
+        if($country_id!='')
+        {
+            $this->db->where('project_country_state.country_id', $country_id);
+        }
+        if($category_id!='')
+        {
+            $this->db->where('goals.categories_id', $category_id);
+            $this->db->where('goals.is_deleted', 0);
+        }
+        if($query!='')
+        {
+            $this->db->like('project.title', $query);
+        }
+        if($status!='')
+        {
+            $this->db->where('project.status_name', $status);
+        }
+        if($ngo_id!='')
+        {
+            $this->db->where('project.ngo_id', $ngo_id);
+        }
+        $this->db->where('project.is_active', 1);
+
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+    
+    public function get_all_projects($where='') 
+    {
+        $this->db->select('*');
+        $this->db->from('project');
+        if($where!='')
+            $this->db->where($where);
+        $result = $this->db->get();
+        return $result->result();
+    }
+
+    public function get_table_status($table_name) 
+    {
+        $query = "SHOW TABLE STATUS LIKE '$table_name'";
+        $result = $this->db->query($query);
+        return $result->row();
+    }
+//////////////////////////
 
     public function get_total_active_beneficiaries($ngo_id)
     {
@@ -302,7 +399,7 @@ class Project_model extends CI_Model
         return $result->row();
     }
     
-    public function get_project_list($where)
+    public function get_all_project_list($where)
     {
         $this->db->select('*');
         $this->db->from('project');
@@ -315,6 +412,7 @@ class Project_model extends CI_Model
         $query = "select * from goals where project_id = $project_id and is_deleted=0";
         $result = $this->db->query($query);
         return $result->result();
+//////////////////////////
     }
 }//end of class
 /* End of file ngo_model.php */

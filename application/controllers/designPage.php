@@ -234,7 +234,7 @@ class DesignPage extends Rest
         return;
     }
 
-    public function template_data($ngo_id='',$version='')
+    public function template_data($ngo_id='', $version='')
     {
         if($version!=null && $version!='null')
             $version=(int)$version;
@@ -272,7 +272,7 @@ class DesignPage extends Rest
         $limit = ($this->input->get('limit'))?$this->input->get('limit'):10;
         $offset=($page-1)*$limit;   
 
-        $template_list = $this->Design_page_model->all_template_data($ngo_id,$offset,$limit);
+        $template_list = $this->Design_page_model->all_template_data($ngo_id, $offset, $limit);
         $template_data = array();
         if(!empty($template_list))
         {

@@ -32,7 +32,7 @@ class NgoDefaultHashtags extends Rest
         else
             $offset=($page-1)*$limit;
             
-        $hashtag_list = $this->Hashtag_model->all_default_hashtags($query,$offset,$limit);
+        $hashtag_list = $this->Hashtag_model->all_default_hashtags($query, $offset, $limit);
         $data['error'] = false;  
         $data['resp'] = array();
         if(!empty($hashtag_list))

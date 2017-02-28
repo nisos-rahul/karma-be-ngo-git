@@ -121,7 +121,7 @@ class Donor extends Rest
         $audit_info['entity'] = 'donor';
         $audit_info['entity_id'] = $donor_id;
         $audit_info['action'] = 'created';
-        $audit_id = $this->Audit_model->create_audit($jsonArray,$audit_info);
+        $audit_id = $this->Audit_model->create_audit($jsonArray, $audit_info);
         //audit add_donor
         return $this->donor_details($donor_id);
     }
@@ -214,9 +214,9 @@ class Donor extends Rest
             return $data;
         }
         
-        $donor_list = $this->Donor_model->donor_list($ngo_id,$query,$status,$offset,$limit);
+        $donor_list = $this->Donor_model->donor_list($ngo_id, $query, $status, $offset, $limit);
         $data['error'] = false;
-        $data['resp']['count']  = $this->Donor_model->donor_count($ngo_id,$query,$status);
+        $data['resp']['count']  = $this->Donor_model->donor_count($ngo_id, $query, $status);
         $donor_final_data = array();
         $p = 0;
         foreach($donor_list as $donor)
@@ -329,7 +329,7 @@ class Donor extends Rest
             echo json_encode($data,JSON_NUMERIC_CHECK);
             exit;
         }
-        $audit_id = $this->Audit_model->update_audit($old_data['resp'],$jsonArray,$audit_info);
+        $audit_id = $this->Audit_model->update_audit($old_data['resp'], $jsonArray, $audit_info);
         //audit update_donor
 
         //xss clean
@@ -337,7 +337,7 @@ class Donor extends Rest
         $projects = $this->security->xss_clean($projects);
 
         //update project
-        $this->Donor_model->update_donor($insert,$id);
+        $this->Donor_model->update_donor($insert, $id);
 
         $this->Donor_model->delete_donor_projects($id);
         foreach($projects as $project_data)
@@ -409,14 +409,14 @@ class Donor extends Rest
         //audit delete_donor
         $old_data = $this->donor_details($id);
         //update donor
-        $this->Donor_model->update_donor($insert,$id);
+        $this->Donor_model->update_donor($insert, $id);
         $audit_info['user_id'] = $user_id;
         $audit_info['role_id'] = $role_id;
         $audit_info['org_id'] = $ngo_id;
         $audit_info['entity'] = 'donor';
         $audit_info['entity_id'] = $id;
         $audit_info['action'] = 'deleted';
-        $audit_id = $this->Audit_model->delete_audit($old_data['resp'],$audit_info);
+        $audit_id = $this->Audit_model->delete_audit($old_data['resp'], $audit_info);
         //audit delete_donor
 
         if(isset($audit_id))                
@@ -431,7 +431,7 @@ class Donor extends Rest
     public function get_active_project()
     {
         $ngo_id = $this->input->get('ngoId');
-        $list = $this->Project_model->project_list($ngo_id,'','true',0,5000);
+        $list = $this->Project_model->project_list($ngo_id, '', 'true', 0, 5000);
         if(empty($list))
         {
             $data['error'] = false;
@@ -440,15 +440,84 @@ class Donor extends Rest
             return;
         }
         $p=0;
-        foreach($list as $project)
+        $project_final_data = array();
+        if(!empty($list))
         {
-            $project_data['id'] = (int)$project->id;
-            $project_data['title'] = $project->title;
-            $project_final_data[$p] = $project_data;
-            $p++;
+            foreach($list as $project)
+            {
+                $project_data['id'] = (int)$project->id;
+                $project_data['title'] = $project->title;
+                $project_final_data[$p] = $project_data;
+                $p++;
+            }
         }
         $data['error'] = false;
         $data['resp']['project'] = $project_final_data;
+        echo json_encode($data);
+        return;
+    }
+
+    public function get_all_donors()
+    {
+
+        $page = ($this->input->get('page'))?$this->input->get('page'):1;
+        $limit = ($this->input->get('limit'))?$this->input->get('limit'):10;
+        $offset=($page-1)*$limit;           
+        $search = ($this->input->get('query'))?$this->input->get('query'):'';
+
+        $donors_list = $this->Donor_model->all_donors_list($search, $offset, $limit);
+        $donors_count = $this->Donor_model->all_donors_count($search);
+        $donor_final_data = array();
+        $p = 0;
+        if(!empty($donors_list))
+        {
+            foreach ($donors_list as $donor) {
+                $id = $donor->id;
+                $donor_info = $this->Donor_model->donor_details($id);
+                if(!empty($donor_info))
+                {
+                    $donor_data = array();
+                    $donor_data['id'] = $donor_id =$donor_info->id;
+                    $donor_data['name'] = $donor_info->name;
+                    $donor_data['imageUrl'] = $donor_info->image_url;
+                    $donor_data['donorUrl'] = $donor_info->donor_url;
+                    $donor_data['organisationId'] = $donor_info->organisation_id;
+                    $donor_data['organisationName'] = $donor_info->organisation_name;
+
+                    // $status = $donor_info->is_active;
+                    // if($status==1)
+                    //     $donor_data['status'] = true;
+                    // else
+                    //     $donor_data['status'] = false;
+                    $is_deleted = $donor_info->is_deleted;
+                    if($is_deleted==1)
+                        $donor_data['isDeleted'] = true;
+                    else
+                        $donor_data['isDeleted'] = false;
+
+                    $projects = $this->Donor_model->get_projects_by_donor_id($donor_id);
+                    $projects_data = array();
+                    $k = 0;
+                    if(!empty($projects))
+                    {
+                        foreach ($projects as $key => $project) 
+                        {
+                            $projects_data[$k]['id'] = $project->id;
+                            $projects_data[$k]['title'] = $project->title;
+                            $k++;
+                        }
+                    }
+                    $donor_data['project'] = $projects_data;
+
+                    $donor_final_data[$p] = $donor_data;
+                    $p++;
+                }
+            }
+        }
+
+        $data['error'] = false;
+        $data['resp']['count'] = (int)$donors_count;
+        $data['resp']['donor'] = $donor_final_data;
         echo json_encode($data);
         return;
     }

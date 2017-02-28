@@ -21,7 +21,7 @@ class Activity_model extends CI_Model
         $id = $this->db->insert_id();       
         return $id;
     }//add_report_image
-    public function previous_activity_outcome_details($outcome_id,$id)
+    public function previous_activity_outcome_details($outcome_id, $id)
     {
         $query = "select max(current_goal) as current_goal from project_report where 
         goal_id=$outcome_id and is_deleted=0 and id<>$id
@@ -29,7 +29,7 @@ class Activity_model extends CI_Model
         $result = $this->db->query($query);
         return $result->row();
     }//previous_activity_outcome_details
-    public function newer_activity_details($outcome_id,$id)
+    public function newer_activity_details($outcome_id, $id)
     {
         $query = "select * from project_report where 
         goal_id=$outcome_id and is_deleted=0 and id>$id";
@@ -94,7 +94,7 @@ class Activity_model extends CI_Model
         $result = $this->db->query($query);
         return $result->result();
     }
-    public function list_activity($search='',$offset,$limit,$ngo_id,$user_id='',$status=true)
+    public function list_activity($search='', $offset, $limit, $ngo_id, $user_id='', $status=true)
     {
         $query="SELECT project_report.*,project.title,user.first_name,user.last_name,
         project.id as project_id,project.is_active
@@ -116,7 +116,7 @@ class Activity_model extends CI_Model
         $result = $this->db->query($query);
         return $result->result();
     }
-    public function activity_count($search='',$offset,$limit,$ngo_id,$user_id='',$status=true)
+    public function activity_count($search='', $offset, $limit, $ngo_id, $user_id='', $status=true)
     {
         $query="SELECT count(*) as num FROM `project_report` join project on project_report.`project_id`=project.id 
         join user on project_report.user_id=user.id 
@@ -135,7 +135,7 @@ class Activity_model extends CI_Model
         return $result->row();
     }
 
-    public function update_activity($update,$activity_id)
+    public function update_activity($update, $activity_id)
     {
         $this->db->update('project_report', $update, array('id' => $activity_id));
         return;
@@ -146,25 +146,25 @@ class Activity_model extends CI_Model
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function activity_video_details($activity_id,$id)
+    public function activity_video_details($activity_id, $id)
     {
         $query="select * from project_report_video 
         where project_report_id=$activity_id and id=$id and is_deleted=0 limit 1";
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function update_report_video($update,$id)
+    public function update_report_video($update, $id)
     {
         $this->db->update('project_report_video', $update,array('id'=>$id)); 
         return;
     }
-    public function activity_image_details($activity_id,$id)
+    public function activity_image_details($activity_id, $id)
     {
         $query="select * from project_report_image where project_report_id=$activity_id and id=$id and is_deleted=0 limit 1";
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function update_report_image($update,$id)
+    public function update_report_image($update, $id)
     {
         $this->db->update('project_report_image', $update,array('id'=>$id)); 
         return;
@@ -198,7 +198,7 @@ class Activity_model extends CI_Model
         $count2 = $result2->row()->num;
         return $count1 + $count2;
     }
-    public function project_activity_media($id,$offset,$limit)
+    public function project_activity_media($id, $offset, $limit)
     {
         $this->db->select("project_report_image.id,project_report_image.last_updated,project_report_image.date_created,project_report_image.url,project_report_image.caption,'image' as type,project_report_image.thumb_url as thumbUrl ",false);
         $this->db->from('project_report_image');
@@ -240,7 +240,7 @@ class Activity_model extends CI_Model
         return $count1 + $count2;
     }   
 
-    public function ngo_update_media($id,$offset,$limit)
+    public function ngo_update_media($id, $offset, $limit)
     {
         $this->db->select("project_report_image.id,project_report_image.last_updated,project_report_image.date_created,project_report_image.url,project_report_image.caption,'image' as type,project_report_image.thumb_url as thumbUrl,project.title as project, project_report_image.project_report_id ",false);
         $this->db->from('project_report_image');
@@ -264,7 +264,7 @@ class Activity_model extends CI_Model
         return $query3->result();
     }   
 
-    public function project_activity($project_id,$offset,$limit)
+    public function project_activity($project_id, $offset, $limit)
     {
         $query1="select project_report.* from project_report where project_report.project_id=$project_id and project_report.is_deleted=0 and project_report.project_report_type='Project Highlight'";
 

@@ -1,7 +1,7 @@
 <?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
 class Ngo_model extends CI_Model {
-    public function organization_details($id,$status='')
+    public function organization_details($id, $status='')
     {
         $this->db->select('*');
         if($status=='')
@@ -66,7 +66,7 @@ class Ngo_model extends CI_Model {
         return $result->result();
     }
     //check video exists
-    public function get_video($id,$ngo_id='')
+    public function get_video($id, $ngo_id='')
     {
         $query = "select * from video where id=$id and is_deleted=0 ";
         if($ngo_id!='')
@@ -77,13 +77,13 @@ class Ngo_model extends CI_Model {
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function update_video($update,$id)
+    public function update_video($update, $id)
     {
         $this->db->update('video', $update, array('id' => $id));
         return true;
     }
     //update ngo
-    public function update_ngo($update,$id)
+    public function update_ngo($update, $id)
     {
         $this->db->update('organisation', $update, array('id' => $id));
         return true;
@@ -93,7 +93,7 @@ class Ngo_model extends CI_Model {
     {
         $this->db->delete('categories_ngo', array('ngo_id' => $ngo_id)); 
     }
-    public function ngo_user_count($ngo_id,$search,$status)
+    public function ngo_user_count($ngo_id, $search, $status)
     {
         $query = "select count(*) as num from ngo_user join user
         on ngo_user.user_id = user.id
@@ -109,7 +109,7 @@ class Ngo_model extends CI_Model {
         $result = $this->db->query($query);
         return $result->row();
     }//ngo_user_count
-    public function ngo_user_list($ngo_id,$search,$status,$offset,$limit)
+    public function ngo_user_list($ngo_id, $search, $status, $offset, $limit)
     {
         $query = "select user.*,profile.id as profile_id,profile.image_url as profile_image from ngo_user join user
         on ngo_user.user_id = user.id
@@ -129,7 +129,7 @@ class Ngo_model extends CI_Model {
         return $result->result();
     }
     
-    public function ngo_admin_data($ngo_id,$search)
+    public function ngo_admin_data($ngo_id, $search)
     {
         $query = "select user.*,profile.id as profile_id,profile.image_url as profile_image from organisation join user
         on organisation.user_id = user.id
@@ -146,20 +146,20 @@ class Ngo_model extends CI_Model {
         return $result->result();
     }
 
-    public function ngo_admin_check($ngo_id,$admin_id)
+    public function ngo_admin_check($ngo_id, $admin_id)
     {
         $query = "select * from organisation where id=$ngo_id and user_id=$admin_id limit 1";
         $result = $this->db->query($query);
         return $result->row();
     }
 
-    public function ngo_user_check($ngo_id,$user_id)
+    public function ngo_user_check($ngo_id, $user_id)
     {
         $query = "select * from ngo_user where ngo_id=$ngo_id and user_id=$user_id limit 1";
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function registration_unique($registration_no,$ngo_id='')
+    public function registration_unique($registration_no, $ngo_id='')
     {
         $query = "select * from organisation where  
         registration_no='$registration_no' ";
@@ -184,7 +184,7 @@ class Ngo_model extends CI_Model {
         $this->db->insert('documents', $insert); 
         $id = $this->db->insert_id();       
     }
-    public function list_org($search='',$status='',$searchby='',$offset,$limit)
+    public function list_org($search='', $status='', $searchby='', $offset, $limit)
     {
         $query = "select id,name from organisation where name like '%$search%' ";
         if($searchby=="ngo")
@@ -203,7 +203,7 @@ class Ngo_model extends CI_Model {
         $result = $this->db->query($query);
         return $result->result();
     }
-    public function list_org_count($search='',$status='',$searchby)
+    public function list_org_count($search='', $status='', $searchby)
     {
         $query = "select count(*) as num from organisation where name like '%$search%'  ";
         if($searchby=="ngo")
@@ -237,12 +237,195 @@ class Ngo_model extends CI_Model {
         $result = $this->db->get('organisation');
         return $result->row();
     }
-    public function organisation_list()
+    // public function organisation_list()
+    // {
+    //     $this->db->select('*');
+    //     $this->db->where('is_deleted',0);
+    //     $result = $this->db->get('organisation');
+    //     return $result->result();
+    // }
+    public function organisation_list($limit, $offset, $query, $category_id, $country_id)
     {
-        $this->db->select('*');
-        $this->db->where('is_deleted',0);
-        $result = $this->db->get('organisation');
-        return $result->result();
+        if($category_id!='')
+        {
+            $this->db->select('organisation.*');
+            $this->db->distinct();
+            $this->db->from('organisation');
+
+            $this->db->join('categories_ngo', 'categories_ngo.ngo_id = organisation.id');
+            $this->db->where('categories_ngo.categories_id', $category_id);
+
+            if($query!='')
+                $this->db->like('organisation.name', $query);
+
+            $this->db->where(array('organisation.is_active'=>1,'organisation.is_deleted'=>0,'organisation.is_archive'=>0));
+            $this->db->get();
+            $query1 = $this->db->last_query();
+
+            $this->db->select('organisation.*');
+            $this->db->distinct();
+            $this->db->from('organisation');
+
+            $this->db->join('project', 'project.ngo_id = organisation.id');
+            $this->db->join('goals', 'goals.project_id = project.id');
+            $this->db->where('goals.categories_id', $category_id);
+            $this->db->where('goals.is_deleted', 0);
+            $this->db->where('project.is_active', 1);
+
+            if($query!='')
+                $this->db->like('organisation.name', $query);
+
+            $this->db->where(array('organisation.is_active'=>1,'organisation.is_deleted'=>0,'organisation.is_archive'=>0));
+            $this->db->get();
+            $query2 = $this->db->last_query();
+
+            $query3 = $this->db->query($query1." UNION ".$query2 . " order by last_updated desc limit ". $offset . "," . $limit);
+            $result = $query3->result();
+            return $result;
+        }
+        elseif($country_id!='')
+        {
+            $this->db->select('organisation.*');
+            $this->db->distinct();
+            $this->db->from('organisation');
+
+            $this->db->where('organisation.country_id', $country_id);
+
+            if($query!='')
+                $this->db->like('organisation.name', $query);
+
+            $this->db->where(array('organisation.is_active'=>1,'organisation.is_deleted'=>0,'organisation.is_archive'=>0));
+            $this->db->get();
+            $query1 = $this->db->last_query();
+
+            $this->db->select('organisation.*');
+            $this->db->distinct();
+            $this->db->from('organisation');
+
+            $this->db->join('project', 'project.ngo_id = organisation.id');
+            $this->db->join('project_country_state', 'project_country_state.project_id = project.id');
+            $this->db->where('project_country_state.country_id', $country_id);
+            $this->db->where('project.is_active', 1);
+
+            if($query!='')
+                $this->db->like('organisation.name', $query);
+
+            $this->db->where(array('organisation.is_active'=>1,'organisation.is_deleted'=>0,'organisation.is_archive'=>0));
+            $this->db->get();
+            $query2 = $this->db->last_query();
+            
+            $query3 = $this->db->query($query1." UNION ".$query2 . " order by last_updated desc limit ". $offset . "," . $limit);
+            $result = $query3->result();
+            return $result;
+        }
+        else
+        {
+            $this->db->select('organisation.*');
+            $this->db->distinct();
+            $this->db->from('organisation');
+
+            if($query!='')
+                $this->db->like('organisation.name', $query);
+
+            $this->db->where(array('organisation.is_active'=>1,'organisation.is_deleted'=>0,'organisation.is_archive'=>0));
+
+            $this->db->order_by('organisation.last_updated', 'desc');
+            $this->db->limit($limit,$offset);
+
+            $result = $this->db->get();
+            $result = $result->result();
+            return $result;
+        }
+    }
+
+    public function organisation_list_count($query, $category_id, $country_id)
+    {
+        if($category_id!='')
+        {
+            $this->db->select('organisation.id');
+            $this->db->distinct();
+            $this->db->from('organisation');
+
+            $this->db->join('categories_ngo', 'categories_ngo.ngo_id = organisation.id');
+            $this->db->where('categories_ngo.categories_id', $category_id);
+
+            if($query!='')
+                $this->db->like('organisation.name', $query);
+
+            $this->db->where(array('organisation.is_active'=>1,'organisation.is_deleted'=>0,'organisation.is_archive'=>0));
+            $this->db->get();
+            $query1 = $this->db->last_query();
+
+            $this->db->select('organisation.id');
+            $this->db->distinct();
+            $this->db->from('organisation');
+
+            $this->db->join('project', 'project.ngo_id = organisation.id');
+            $this->db->join('goals', 'goals.project_id = project.id');
+            $this->db->where('goals.categories_id', $category_id);
+            $this->db->where('goals.is_deleted', 0);
+            $this->db->where('project.is_active', 1);
+
+            if($query!='')
+                $this->db->like('organisation.name', $query);
+
+            $this->db->where(array('organisation.is_active'=>1,'organisation.is_deleted'=>0,'organisation.is_archive'=>0));
+            $this->db->get();
+            $query2 = $this->db->last_query();
+
+            $query3 = $this->db->query($query1." UNION ".$query2);
+            $result = $query3->result();
+            return count($result);
+        }
+        elseif($country_id!='')
+        {
+            $this->db->select('organisation.id');
+            $this->db->distinct();
+            $this->db->from('organisation');
+
+            $this->db->where('organisation.country_id', $country_id);
+
+            if($query!='')
+                $this->db->like('organisation.name', $query);
+
+            $this->db->where(array('organisation.is_active'=>1,'organisation.is_deleted'=>0,'organisation.is_archive'=>0));
+            $this->db->get();
+            $query1 = $this->db->last_query();
+
+            $this->db->select('organisation.id');
+            $this->db->distinct();
+            $this->db->from('organisation');
+
+            $this->db->join('project', 'project.ngo_id = organisation.id');
+            $this->db->join('project_country_state', 'project_country_state.project_id = project.id');
+            $this->db->where('project_country_state.country_id', $country_id);
+            $this->db->where('project.is_active', 1);
+
+            if($query!='')
+                $this->db->like('organisation.name', $query);
+
+            $this->db->where(array('organisation.is_active'=>1,'organisation.is_deleted'=>0,'organisation.is_archive'=>0));
+            $this->db->get();
+            $query2 = $this->db->last_query();
+            
+            $query3 = $this->db->query($query1." UNION ".$query2);
+            $result = $query3->result();
+            return count($result);
+        }
+        else
+        {
+            $this->db->select('count(organisation.id) as num ');
+            $this->db->distinct();
+            $this->db->from('organisation');
+
+            if($query!='')
+                $this->db->like('organisation.name', $query);
+
+            $this->db->where(array('organisation.is_active'=>1,'organisation.is_deleted'=>0,'organisation.is_archive'=>0));
+            $result = $this->db->get();
+            $count = $result->row()->num;
+            return (int)$count;
+        }
     }
 
     

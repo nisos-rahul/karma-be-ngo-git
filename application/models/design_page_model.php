@@ -8,7 +8,7 @@ class Design_page_model extends CI_Model
         return $this->db->insert_id();
     }
 
-    public function update_template($update,$id) {
+    public function update_template($update, $id) {
 
         $this->db->update('ngo_template', $update, array('id'=>$id));
         return;
@@ -44,7 +44,7 @@ class Design_page_model extends CI_Model
         return $result->row();
     }
 
-    public function all_template_data($ngo_id,$offset,$limit) {
+    public function all_template_data($ngo_id, $offset, $limit) {
 
         $this->db->select('*');
         $this->db->from('ngo_template');

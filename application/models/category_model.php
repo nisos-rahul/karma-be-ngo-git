@@ -2,7 +2,7 @@
 
 class Category_model extends CI_Model 
 {
-    public function category_list($search='',$offset='',$limit='')
+    public function category_list($search='', $offset='', $limit='')
     {
         $query = "select * from categories where is_deleted=0 ";
         if($search!="")
@@ -31,6 +31,25 @@ class Category_model extends CI_Model
         $query = "select id from categories where category='$catname' and is_deleted=0 limit 1";
         $result = $this->db->query($query);
         return $result->row();
+    }
+    public function get_category_info($where)
+    {
+        $this->db->select('*');
+        $this->db->from('categories');
+        $this->db->where($where);
+        $this->db->where('is_deleted', 0);
+        $result = $this->db->get();
+        return $result->row();
+    }
+    public function add_pillar($insert)
+    {
+        $this->db->insert('categories', $insert);
+        return $this->db->insert_id();
+    }
+    public function update_category($update, $id)
+    {
+        $this->db->update('categories', $update, array('id'=>$id));
+        return;
     }
 }//end of class
 /* End of file category_model.php */

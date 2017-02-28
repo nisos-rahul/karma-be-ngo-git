@@ -140,7 +140,7 @@ $route['delete/goal/media'] = 'project/delete_goals_media';
 $route['activity/(:num)/media/(:num)/(:any)'] = 'activity/get_activity_media/$1/$2/$3';
 $route['twitter/screenname/(:any)'] = 'socialMediaSharing/get_screen_name/$1';
 
-$route['kraken'] = 'krakenApi/upload_media';
+// $route['kraken'] = 'krakenApi/upload_media';
 
 $route['ngo/donation'] = 'firstGiving/get_ngo_donation_status';
 $route['ngo/donation/update'] = 'firstGiving/update_ngo_donation_status';
@@ -154,13 +154,30 @@ $route['firstgiving/application/update/(:num)'] = 'firstGiving/update_applicatio
 $route['firstgiving/application/status/(:num)'] = 'firstGiving/change_application_status/$1';
 $route['firstgiving/log'] = 'firstGiving/store_transaction_log';
 $route['firstgiving/delete'] = 'firstGiving/delete_selected_firstgiving_entity';
-
-$route['facebook/expiration'] = 'socialMediaSharing/chech_facebook_expiration';
-
 $route['firstgiving/transaction/refund'] = 'firstGiving/refund_transaction';
 $route['firstgiving/refund/ngo'] = 'firstGiving/get_ngo_list_for_refund';
 $route['transaction/list/refresh'] = 'firstGiving/refresh_transaction_list';
 $route['firstgiving/transaction/refresh'] = 'firstGiving/refresh_transaction';
+
+
+$route['facebook/expiration'] = 'socialMediaSharing/check_facebook_expiration';
+
+$route['ngo/details/name'] = 'ngo/get_ngo_data_by_branding';
+$route['category/details/name'] = 'category/get_category_id_by_name';
+$route['country/details/name'] = 'country/get_country_id_by_name';
+$route['ngo/list'] = 'ngo/list_all_ngo';
+$route['project/list'] = 'project/get_all_projects';
+$route['donors/list'] = 'donor/get_all_donors';
+
+$route['route/page'] = 'routing/get_page_type';
+$route['ngo/(:num)/delete/routes'] = 'routing/delete_ngo_routes_delete/$1';
+$route['route/slug'] = 'routing/create_slug_url';
+
+$route['pillar'] = 'category/add_category';
+$route['pillar/(:num)'] = 'category/update_delete_category/$1';
+$route['platform/getinvolvelist'] = 'platform/getinvolve_list';
+
+// $route['ngo/(:num)/details'] = 'ngo/get_ngo_data_by_id/$1';
 
 /* End of file routes.php */
 /* Location: ./application/config/routes.php */

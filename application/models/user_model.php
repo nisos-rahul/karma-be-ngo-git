@@ -43,12 +43,12 @@ class User_model extends CI_Model {
         $this->db->insert('profile', $insert); 
         return;
     }
-    public function profile_update($update,$id)
+    public function profile_update($update, $id)
     {
         $this->db->update('profile', $update, array('id' => $id));
         return true;
     }
-    public function update_user($update,$id)
+    public function update_user($update, $id)
     {
         $this->db->update('user', $update, array('id' => $id));
         return true;
@@ -64,13 +64,13 @@ class User_model extends CI_Model {
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function update_user_email_duplicate($email,$id)
+    public function update_user_email_duplicate($email, $id)
     {
         $query = "select * from user where email='$email' and id!=$id limit 1";
         $result = $this->db->query($query);
         return $result->row();
     }//update_user_email_duplicate
-    public function update_username_duplicate($username,$id)
+    public function update_username_duplicate($username, $id)
     {
         $query = "select * from user where username='$username' and id!=$id limit 1";
         $result = $this->db->query($query);

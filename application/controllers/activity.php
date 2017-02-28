@@ -3,8 +3,10 @@ include APPPATH.'controllers/rest.php';
 
 class Activity extends Rest 
 {
+
     public function __construct()
     {
+
         parent::__construct();
         if($this->input->server('HTTP_X_AUTH_TOKEN'))
         {
@@ -27,13 +29,14 @@ class Activity extends Rest
     }
     public function list_outcomes($project_id)
     {       
+
         $project_id = (int) $project_id;        
         $page = ($this->input->get('page'))?$this->input->get('page'):1;
         $limit = ($this->input->get('limit'))?$this->input->get('limit'):10;
         $query = ($this->input->get('query'))?$this->input->get('query'):'';
         $offset=($page-1)*$limit;   
-        $outcome_data = $this->Project_model->outcome_list($project_id,$query,$offset,$limit);
-        $count = $this->Project_model->active_outcome_count($project_id,$query);
+        $outcome_data = $this->Project_model->outcome_list($project_id, $query, $offset, $limit);
+        $count = $this->Project_model->active_outcome_count($project_id, $query);
         $data['error'] = false;
         $data['resp']['count'] = $count->num;
         $outcome = array();
@@ -56,8 +59,8 @@ class Activity extends Rest
     {
         $outcome_id = (int) $outcome_id;
         $outcome_details = $this->Project_model->outcome_details($outcome_id);
-        if(!empty($outcome_details))
-        {
+        if(!empty($outcome_details)) {
+
             $data['error'] = false;
             $data['resp']['id'] = $outcome_details->id;
             $data['resp']['outcome'] = $outcome_details->goal;
@@ -106,7 +109,7 @@ class Activity extends Rest
                         $ngo_id = $this->input->get('ngoId');
                     else
                         $ngo_id = login_ngo_details($auth_token);
-                    $company_list = $this->Project_model->company_project_list_approved($ngo_id,$projectId);
+                    $company_list = $this->Project_model->company_project_list_approved($ngo_id, $projectId);
                     if(!empty($company_list))
                     {
                         foreach($company_list as $company)
@@ -174,7 +177,7 @@ class Activity extends Rest
                     $ngo_id = $this->input->get('ngoId');
                 else
                     $ngo_id = login_ngo_details($auth_token);
-                $company_list = $this->Project_model->company_project_list_approved($ngo_id,$projectId);
+                $company_list = $this->Project_model->company_project_list_approved($ngo_id, $projectId);
                 if(!empty($company_list))
                 {
                     foreach($company_list as $company)
@@ -207,8 +210,8 @@ class Activity extends Rest
 
         $insert['user_id'] = $user_id = $valid_auth_token->user_id;
         $role_id = $valid_auth_token->role_id;
-        if($role_id==7)
-        {
+        if($role_id==7) {
+
             $ngo_id = $this->input->get('ngoId');
         }
         else
@@ -242,7 +245,7 @@ class Activity extends Rest
             header('HTTP/1.1 400 Validation Error.');
             return $data;
         }   
-        $project_details = $this->Project_model->project_ngo($ngo_id,$project_id);
+        $project_details = $this->Project_model->project_ngo($ngo_id, $project_id);
         if(empty($project_details))
         {
             $data['error'] = true;
@@ -251,6 +254,7 @@ class Activity extends Rest
             header('HTTP/1.1 404 Not Found');
             return $data;
         }
+        
 
         if($project_report_type=='Progress Update')
         {
@@ -290,7 +294,7 @@ class Activity extends Rest
                 header('HTTP/1.1 400 Validation Error.');
                 return $data;
             }
-            $outcome_details = $this->Project_model->project_goal_check($outcome_id,$project_id);
+            $outcome_details = $this->Project_model->project_goal_check($outcome_id, $project_id);
             if(empty($outcome_details))
             {
                 $data['error'] = true;
@@ -301,7 +305,7 @@ class Activity extends Rest
             }
             //update current goal in project table also
             $project_goal_update['goal_achieved'] = $current_outcome;
-            $this->Project_model->update_outcomes($project_goal_update,$outcome_id);
+            $this->Project_model->update_outcomes($project_goal_update, $outcome_id);
         }
         elseif($project_report_type=='Project Highlight')
         {
@@ -461,7 +465,7 @@ class Activity extends Rest
             return $data;
         }
 
-        $project_ngo_check = $this->Project_model->project_ngo($ngo_id,$project_id);
+        $project_ngo_check = $this->Project_model->project_ngo($ngo_id, $project_id);
         if(empty($project_ngo_check))
         {
             $data['error'] = true;
@@ -527,9 +531,9 @@ class Activity extends Rest
         $query = ($this->input->get('query'))?$this->input->get('query'):'';
         $status = ($this->input->get('status'))?$this->input->get('status'):true;
 
-        $total_count = $this->Activity_model->activity_count('',$offset,$limit,$ngo_id,'',$status);
-        $count = $this->Activity_model->activity_count($query,$offset,$limit,$ngo_id,'',$status);
-        $activity_list = $this->Activity_model->list_activity($query,$offset,$limit,$ngo_id,'',$status);
+        $total_count = $this->Activity_model->activity_count('', $offset, $limit, $ngo_id, '', $status);
+        $count = $this->Activity_model->activity_count($query, $offset, $limit, $ngo_id, '', $status);
+        $activity_list = $this->Activity_model->list_activity($query, $offset, $limit, $ngo_id, '', $status);
         $data['error'] = false;
         $data['resp']['total_count'] = $total_count->num;
         $data['resp']['count'] = $count->num;
@@ -587,7 +591,10 @@ class Activity extends Rest
                         $outcomes[0]['currentOutcome'] = $activity_goal_data->current_goal;
                         $outcomes[0]['goalOutcome'] = $activity_goal_data->goal_target;
                         $activity_data[$i]['outcomes'] = $outcomes;
-                        $activity_data[$i]['outcomeStatus'] = true;
+                        if(ord($activity_goal_data->isdeleted)==1 || $activity_goal_data->isdeleted==1)
+                            $activity_data[$i]['outcomeStatus'] = false;
+                        else
+                            $activity_data[$i]['outcomeStatus'] = true;
                     }
                 }
                 elseif($activity_type=='Project Highlight')
@@ -642,21 +649,21 @@ class Activity extends Rest
             if(!empty($outcome_details))
             {
 
-                $newer_activities = $this->Activity_model->newer_activity_details($outcome_id,$activity_id);
+                $newer_activities = $this->Activity_model->newer_activity_details($outcome_id, $activity_id);
                 if(!empty($newer_activities))
                 {
                     foreach ($newer_activities as $newer_activity) {
                         $newer_activity_id = $newer_activity->id;
                         $update_newer_activity['current_goal'] = $newer_activity->current_goal - $activity_exists->new_progress;
                         $update_newer_activity['last_updated'] = date('Y-m-d H:i:s');
-                        $this->Activity_model->update_activity($update_newer_activity,$newer_activity_id);
+                        $this->Activity_model->update_activity($update_newer_activity, $newer_activity_id);
                     }
                 }
 
                 $update_outcome['goal_achieved'] = $outcome_details->goal_achieved - $activity_exists->new_progress;
                 $update_outcome['last_updated'] = date('Y-m-d H:i:s');
 
-                $this->Project_model->update_outcomes($update_outcome,$outcome_id); 
+                $this->Project_model->update_outcomes($update_outcome, $outcome_id); 
             }//if(!empty($outcome_details))
             $update['is_deleted'] = true;
             $update['deleted_at'] = $update['last_updated'] = date('Y-m-d H:i:s');
@@ -671,13 +678,13 @@ class Activity extends Rest
                 if($currentOutcomeProject<$activity_exists->current_goal)
                 {
                     $update_goal['goal_achieved'] = $activity_exists->current_goal;
-                    $this->Project_model->update_outcomes($update_goal,$outcome_id);    
+                    $this->Project_model->update_outcomes($update_goal, $outcome_id);    
                 }
             }//if(!empty($outcome_details))
             $update['is_deleted'] = false;
             $update['last_updated'] = date('Y-m-d H:i:s');
         }
-        $this->Activity_model->update_activity($update,$activity_id);
+        $this->Activity_model->update_activity($update, $activity_id);
 
         //audit delete_activity
         $audit_info['user_id'] = $user_id;
@@ -687,7 +694,7 @@ class Activity extends Rest
         $audit_info['entity_id'] = $activity_id;
         $audit_info['action'] = 'deleted';
         $old_data = $this->activity_details($activity_id);
-        $audit_id = $this->Audit_model->delete_audit($old_data['resp'],$audit_info);
+        $audit_id = $this->Audit_model->delete_audit($old_data['resp'], $audit_info);
         if($audit_id!='false')              
             $this->Audit_model->activate_audit($audit_id);
         //audit delete_activity
@@ -696,11 +703,11 @@ class Activity extends Rest
         echo json_encode($data,JSON_NUMERIC_CHECK);
         return;
     }//update_status
-    public function delete_video($activity_id,$video_id)
+    public function delete_video($activity_id, $video_id)
     {
         $method = $this->input->get('method');
         
-        $videoDetails=$this->Activity_model->activity_video_details($activity_id,$video_id);
+        $videoDetails=$this->Activity_model->activity_video_details($activity_id, $video_id);
         if(empty($videoDetails))
         {
             $data['error'] = true;
@@ -724,9 +731,9 @@ class Activity extends Rest
             $audit_info['entity'] = 'activity video';
             $audit_info['entity_id'] = $video_id;
             $audit_info['action'] = 'deleted';
-            $audit_id = $this->Audit_model->delete_audit($videoDetails,$audit_info);
+            $audit_id = $this->Audit_model->delete_audit($videoDetails, $audit_info);
 
-            $this->Activity_model->update_report_video($update,$video_id);
+            $this->Activity_model->update_report_video($update, $video_id);
         
             $this->Audit_model->activate_audit($audit_id);
             //audit delete_video
@@ -772,9 +779,9 @@ class Activity extends Rest
             $audit_info['entity'] = 'activity video caption';
             $audit_info['entity_id'] = $video_id;
             $audit_info['action'] = 'updated';
-            $audit_id = $this->Audit_model->update_audit_3($old_data,$jsonArray,$audit_info);
+            $audit_id = $this->Audit_model->update_audit_3($old_data, $jsonArray, $audit_info);
 
-            $this->Activity_model->update_report_video($update,$video_id);
+            $this->Activity_model->update_report_video($update, $video_id);
 
             if($audit_id!='false')              
                 $this->Audit_model->activate_audit($audit_id);
@@ -795,10 +802,10 @@ class Activity extends Rest
             return;
         }   
     }//delete_video($activity_id,$video_id)
-    public function delete_image($activity_id,$image_id)
+    public function delete_image($activity_id, $image_id)
     {
         $method = $this->input->get('method');      
-        $imageDetails=$this->Activity_model->activity_image_details($activity_id,$image_id);
+        $imageDetails=$this->Activity_model->activity_image_details($activity_id, $image_id);
         if(empty($imageDetails))
         {
             $data['error'] = true;
@@ -822,9 +829,9 @@ class Activity extends Rest
             $audit_info['entity'] = 'activity image';
             $audit_info['entity_id'] = $image_id;
             $audit_info['action'] = 'deleted';
-            $audit_id = $this->Audit_model->delete_audit($imageDetails,$audit_info);
+            $audit_id = $this->Audit_model->delete_audit($imageDetails, $audit_info);
 
-            $this->Activity_model->update_report_image($update,$image_id);
+            $this->Activity_model->update_report_image($update, $image_id);
         
             $this->Audit_model->activate_audit($audit_id);
             //audit_K delete_image
@@ -869,9 +876,9 @@ class Activity extends Rest
             $audit_info['entity'] = 'activity image caption';
             $audit_info['entity_id'] = $image_id;
             $audit_info['action'] = 'updated';
-            $audit_id = $this->Audit_model->update_audit_3($old_data,$jsonArray,$audit_info);
+            $audit_id = $this->Audit_model->update_audit_3($old_data, $jsonArray, $audit_info);
 
-            $this->Activity_model->update_report_image($update,$image_id);
+            $this->Activity_model->update_report_image($update, $image_id);
 
             if($audit_id!='false')              
                 $this->Audit_model->activate_audit($audit_id);
@@ -1151,7 +1158,7 @@ class Activity extends Rest
             header('HTTP/1.1 400 Validation Error.');
             return $data;
         }
-        $project_details = $this->Project_model->project_ngo($ngo_id,$project_id);
+        $project_details = $this->Project_model->project_ngo($ngo_id, $project_id);
         if(empty($project_details))
         {
             $data['error'] = true;
@@ -1202,7 +1209,7 @@ class Activity extends Rest
                 header('HTTP/1.1 400 Validation Error.');
                 return $data;
             }
-            $outcome_details = $this->Project_model->project_goal_check($outcome_id,$project_id);
+            $outcome_details = $this->Project_model->project_goal_check($outcome_id, $project_id);
             if(empty($outcome_details))
             {
                 $data['error'] = true;
@@ -1215,7 +1222,7 @@ class Activity extends Rest
             {
                 //update current goal in project table also
                 $project_goal_update['goal_achieved'] = $current_outcome;
-                $this->Project_model->update_outcomes($project_goal_update,$outcome_id);
+                $this->Project_model->update_outcomes($project_goal_update, $outcome_id);
             }
         }
         
@@ -1230,9 +1237,9 @@ class Activity extends Rest
         $audit_info['entity_id'] = $activity_id;
         $audit_info['action'] = 'updated';
         $old_data = $this->activity_details($activity_id);
-        $audit_id = $this->Audit_model->update_audit($old_data['resp'],$jsonArray,$audit_info);
+        $audit_id = $this->Audit_model->update_audit($old_data['resp'], $jsonArray, $audit_info);
 
-        $this->Activity_model->update_activity($update,$activity_id);
+        $this->Activity_model->update_activity($update, $activity_id);
         
         if($audit_id!='false')              
             $this->Audit_model->activate_audit($audit_id);
@@ -1241,7 +1248,7 @@ class Activity extends Rest
         $data = $this->activity_details($activity_id);
         return $data;
     }//update_activity
-    public function postActivityFacebook($activityId,$projectId,$user_id)
+    public function postActivityFacebook($activityId, $projectId, $user_id)
     {
         
         $auth_token = $this->input->server('HTTP_X_AUTH_TOKEN');        
@@ -1273,7 +1280,7 @@ class Activity extends Rest
         return;
     }//postActivityFacebook
 
-    public function get_activity_media($activity_id,$media_id,$media_type)
+    public function get_activity_media($activity_id, $media_id, $media_type)
     {
         $data['error'] = false;
         $type = $this->Activity_model->get_project_report_type($activity_id);

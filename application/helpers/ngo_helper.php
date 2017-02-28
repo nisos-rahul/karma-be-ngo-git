@@ -120,6 +120,7 @@
 
         $data['resp']['websiteUrl'] = $organisation->website_url;
         $data['resp']['brandingUrl'] = $organisation->branding_url;
+        $data['resp']['brandingUrlView'] = $organisation->ngo_url_suffix;
         $donation_status = $organisation->donation_status;
         if($donation_status==1)
             $data['resp']['donationStatus'] = true;

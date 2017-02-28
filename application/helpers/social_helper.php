@@ -1,5 +1,6 @@
 <?php if(!defined('BASEPATH')) exit('No direct script access allowed');
-include '/home/devuser/projects/karma-be-ngo/application/libraries/facebook-php-sdk-v4-5.0.0/src/Facebook/autoload.php';
+// include '/home/devuser/projects/karma-be-ngo/application/libraries/facebook-php-sdk-v4-5.0.0/src/Facebook/autoload.php';
+include 'application/libraries/facebook-php-sdk-v4-5.0.0/src/Facebook/autoload.php';
 
 if(!function_exists('post_on_facebook')) {
 	function post_on_facebook($ngo_id, $linkData)

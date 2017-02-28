@@ -95,7 +95,7 @@ class Dashboard extends Rest
         $data['error']=false;
         $data['resp']['count']=$i;
         $data['resp']['category']=$categories;
-        $data['resp']['totalProjectCount']  = $this->Project_model->project_list_count($ngo_id,'',true)->num;
+        $data['resp']['totalProjectCount']  = $this->Project_model->project_list_count($ngo_id, '', true)->num;
         echo json_encode($data,JSON_NUMERIC_CHECK);
         return;
     }//category_list
@@ -148,7 +148,7 @@ class Dashboard extends Rest
             echo json_encode($data,JSON_NUMERIC_CHECK);
             return;
         }
-        $project_activity = $this->Dashboard_model->project_activity_year($ngo_id,$year,$month);
+        $project_activity = $this->Dashboard_model->project_activity_year($ngo_id, $year, $month);
         $project_data = array();
         $i=0;
         $data['error'] = false;

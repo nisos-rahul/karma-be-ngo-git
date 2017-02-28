@@ -29,7 +29,7 @@ class Tweets extends Rest
             );
         $data['error'] = false;
         $data['resp']['count'] = $this->Tweets_model->ngo_tweets_count($where)->num;
-        $data['resp']['tweets'] = $this->Tweets_model->ngo_tweets_with_highlights($offset,$limit,$id);
+        $data['resp']['tweets'] = $this->Tweets_model->ngo_tweets_with_highlights($offset, $limit, $id);
         echo json_encode($data,JSON_NUMERIC_CHECK);
         return;
     }

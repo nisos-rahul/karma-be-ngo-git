@@ -93,31 +93,31 @@ class Ngoteam extends Rest
             }
             //fetch users from ngo_user
             $data['error'] = false;
-            $count = $this->Ngo_model->ngo_user_count($ngo_id,$query,$status);
+            $count = $this->Ngo_model->ngo_user_count($ngo_id, $query, $status);
             $data['resp']['count'] = $count->num;
             if($role_id==4 || $role_id==5)
             {
-                $ngo_user_list = $this->Ngo_model->ngo_user_list($ngo_id,$query,$status,$offset,$limit);
+                $ngo_user_list = $this->Ngo_model->ngo_user_list($ngo_id, $query, $status, $offset, $limit);
             }
             else
             {
                 if($page==1)
                 {
                     if($status=='false')
-                        $ngo_user_list = $this->Ngo_model->ngo_user_list($ngo_id,$query,$status,$offset,$limit);
+                        $ngo_user_list = $this->Ngo_model->ngo_user_list($ngo_id, $query, $status, $offset, $limit);
                     else
                     {
                         $data['resp']['count'] = $count->num+1;
-                        $ngo_admin_data = $this->Ngo_model->ngo_admin_data($ngo_id,$query);
+                        $ngo_admin_data = $this->Ngo_model->ngo_admin_data($ngo_id, $query);
                         $limit = $limit-1;
-                        $ngo_member_list = $this->Ngo_model->ngo_user_list($ngo_id,$query,$status,$offset,$limit);
+                        $ngo_member_list = $this->Ngo_model->ngo_user_list($ngo_id, $query, $status, $offset, $limit);
                         $ngo_user_list = array_merge($ngo_admin_data, $ngo_member_list);
                     }
                 }
                 else
                 {
                     $offset = $offset-1;    
-                    $ngo_user_list = $this->Ngo_model->ngo_user_list($ngo_id,$query,$status,$offset,$limit);
+                    $ngo_user_list = $this->Ngo_model->ngo_user_list($ngo_id, $query, $status, $offset, $limit);
                 }
             }
             
@@ -260,7 +260,7 @@ class Ngoteam extends Rest
             return;
         }
     }//invite_user
-    protected function invitationEmail($role_id,$email,$random_code,$first_name,$last_name)
+    protected function invitationEmail($role_id, $email, $random_code, $first_name, $last_name)
     {
         
         $this->config->load('email_setting');

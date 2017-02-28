@@ -28,6 +28,8 @@ class Project extends Rest
         $this->load->model('Hashtag_model');
         $this->load->model('Activity_model');
         $this->load->model('Audit_model');
+        $this->load->helper('url_routing');
+        $this->load->model('Routing_model');
     }
     public function update_details($id)
     {
@@ -142,7 +144,7 @@ class Project extends Rest
 
         if($status!='Inactive')
         {
-            $count  = $this->Project_model->project_list_count($ngo_id,'','true')->num;
+            $count  = $this->Project_model->project_list_count($ngo_id, '', 'true')->num;
             if($count >= 12)
             {
                 $data['error'] = true;
@@ -300,11 +302,62 @@ class Project extends Rest
                 $insert['over_all_goal']+=$outcome_list['goalOutcome']; //goal and target in insert array are changed to outcome and goal respectively
             }
         }
-        
+
         $insert['track_goal'] = 1;
+
+        $project_status = $this->Project_model->get_table_status('project'); 
+        $auto_increment_value = $project_status->Auto_increment;
+
+        //routes
+        $ngo_details = $this->Ngo_model->organization_details($ngo_id, 'any');
+        $ngo_url_suffix = $ngo_details->ngo_url_suffix;
+        $url1 = str_replace(' ', '-', $insert['title']); 
+        // $url1 = 'projects/'.rawurlencode($url1).'-'.$auto_increment_value;
+        // $check1 = $this->Routing_model->get_url_slug_data($url1);
+        // if(!empty($check1))
+        // {
+        //     $data['error'] = true;
+        //     $data['status'] = 400;
+        //     $data['message'] = "Url routing unique constraint failed, Please change project name.";
+        //     header('HTTP/1.1 400 Validation Error.');
+        //     echo json_encode($data,JSON_NUMERIC_CHECK);
+        //     exit;
+        // }
+        if($ngo_url_suffix!=null && $ngo_url_suffix!='')
+        {
+            $url2 = rawurlencode($ngo_url_suffix).'/projects/'.rawurlencode($url1).'-'.$auto_increment_value;
+            $check2 = $this->Routing_model->get_url_slug_data($url2);
+            if(!empty($check2))
+            {
+                $data['error'] = true;
+                $data['status'] = 400;
+                $data['message'] = "Url routing unique constraint failed, Please change project name.";
+                header('HTTP/1.1 400 Validation Error.');
+                echo json_encode($data,JSON_NUMERIC_CHECK);
+                exit;
+            }
+        }
+        //routes
 
         $outcome_insert['project_id'] = $insert_country['project_id'] = $projectId = $this->Project_model->create_project($insert);
         //insert project
+
+        //routes
+        $insert_array = array();
+        if($ngo_url_suffix!=null && $ngo_url_suffix!='')
+        {
+            $array = array();
+            $array['page_id'] = 10;
+            $array['entity_name'] = 'ngo_branding_change';
+            $array['entity_id'] = $ngo_id;
+            $array['second_entity_id'] = $projectId;
+            $array['url_slug'] = $url2;
+            array_push($insert_array, $array);
+        }
+
+        foreach($insert_array as $array)
+            $this->Routing_model->insert_url($array);
+        //routes
 
         $outcome_insert['date_created'] = $outcome_insert['last_updated'] = date('Y-m-d H:i:s');
         if(!empty($countryRegion))
@@ -317,9 +370,9 @@ class Project extends Rest
                 if(!empty($country) && !empty($countryCode) )
                 {
                     $state = isset($regions['state'])?$regions['state']:'';
-                    $insert_country['country_id'] = $this->Country_model->country_get_insert($country,$countryCode);
+                    $insert_country['country_id'] = $this->Country_model->country_get_insert($country, $countryCode);
                     if(!empty($state))
-                        $insert_country['state_id'] = $this->Country_model->state_get_insert($state,$insert_country['country_id']);
+                        $insert_country['state_id'] = $this->Country_model->state_get_insert($state, $insert_country['country_id']);
                     else
                         $insert_country['state_id'] = NULL;
                     $this->Project_model->project_country_region($insert_country);
@@ -390,7 +443,7 @@ class Project extends Rest
         $audit_info['entity'] = 'project';
         $audit_info['entity_id'] = $projectId;
         $audit_info['action'] = 'created';
-        $audit_id = $this->Audit_model->create_audit($data['resp'],$audit_info);
+        $audit_id = $this->Audit_model->create_audit($data['resp'], $audit_info);
         //audit create_project
         return $data;
     }
@@ -422,15 +475,18 @@ class Project extends Rest
                 $ngo_id = $this->input->get('ngoId');
             }
             //check if this project belongs to this ngo
-            $project_ngo_check = $this->Project_model->project_ngo($ngo_id,$id);
-            if(empty($project_ngo_check))
+            if($ngo_id!=false)
             {
-                $data['error'] = true;
-                $data['status'] = 401;
-                $data['message'] = "Unauthorized User.";
-                header('HTTP/1.1 401 Unauthorized User');
-                echo json_encode($data,JSON_NUMERIC_CHECK);
-                exit;
+                $project_ngo_check = $this->Project_model->project_ngo($ngo_id, $id);
+                if(empty($project_ngo_check))
+                {
+                    $data['error'] = true;
+                    $data['status'] = 401;
+                    $data['message'] = "Unauthorized User.";
+                    header('HTTP/1.1 401 Unauthorized User');
+                    echo json_encode($data,JSON_NUMERIC_CHECK);
+                    exit;
+                }
             }
 
             $data['error'] = false;
@@ -580,7 +636,7 @@ class Project extends Rest
             
             //member list
             $company_data = array();
-            $company_list = $this->Project_model->company_project_list_approved($ngo_id,$id);
+            $company_list = $this->Project_model->company_project_list_approved($ngo_id, $id);
             if(!empty($company_list))
             {
                 $i = 0;
@@ -589,7 +645,7 @@ class Project extends Rest
                     $company_data[$i]['companyId'] = $comp_id = $company_info->id;
                     $company_data[$i]['name'] = $company_info->name;
                     //fund amount
-                    $fund_info = $this->Project_model->company_project_fund($comp_id,$id);
+                    $fund_info = $this->Project_model->company_project_fund($comp_id, $id);
                     if(!empty($fund_info))
                         $company_data[$i]['funds'] = $fund_info->funds;
                     else
@@ -676,7 +732,7 @@ class Project extends Rest
             exit;
         }
         
-        $list = $this->Project_model->project_list($ngo_id,$query,$status,$offset,$limit);
+        $list = $this->Project_model->project_list($ngo_id, $query, $status, $offset, $limit);
         $data['error'] = false;
         $project_final_data = array();
         $p = 0;
@@ -766,6 +822,8 @@ class Project extends Rest
             else
                 $project_data['isFeaturedProject'] = false;
             $project_data['ngoId'] = $ngo_id = $project_info->ngo_id;
+            $ngo_details = $this->Ngo_model->organization_details($ngo_id, 'any');
+            $project_data['ngoName'] = $ngo_details->name;
             //country details
             $country_info = $this->Project_model->project_country_details($id);
 
@@ -911,8 +969,8 @@ class Project extends Rest
             $project_final_data = array_reverse($project_final_data);
         }
         
-        $data['resp']['count']  = $this->Project_model->project_list_count($ngo_id,$query,$status)->num;
-        $data['resp']['total_count']  = $this->Project_model->project_list_count($ngo_id,'','')->num;
+        $data['resp']['count']  = $this->Project_model->project_list_count($ngo_id, $query, $status)->num;
+        $data['resp']['total_count']  = $this->Project_model->project_list_count($ngo_id, '', '')->num;
         $data['resp']['active_project_count'] = $this->Project_model->active_project_count($ngo_id, 'active')->num;
         $data['resp']['project'] = $project_final_data;
         return $data;
@@ -951,7 +1009,7 @@ class Project extends Rest
         $jsonArray = json_decode(file_get_contents('php://input'),true); 
         $status = isset($jsonArray['status'])?$jsonArray['status']:false;
 
-        $project_ngo = $this->Project_model->project_ngo($ngo_id,$id);
+        $project_ngo = $this->Project_model->project_ngo($ngo_id, $id);
         if(empty($project_ngo))
         {
             header('HTTP/1.1 401 Unauthorized');
@@ -964,7 +1022,7 @@ class Project extends Rest
             $previous_status = $projectDetails->status_name;
             if($previous_status=='Inactive')
             {
-                $count  = $this->Project_model->project_list_count($ngo_id,'','true')->num;
+                $count  = $this->Project_model->project_list_count($ngo_id, '', 'true')->num;
                 if($count >= 12)
                 {
                     $data['error'] = true;
@@ -978,7 +1036,7 @@ class Project extends Rest
         }
         //role_check
         //check project from same ngo
-        $project_ngo = $this->Project_model->project_ngo($ngo_id,$id);
+        $project_ngo = $this->Project_model->project_ngo($ngo_id, $id);
         if(empty($project_ngo))
         {
             echo "Asd";
@@ -1015,10 +1073,10 @@ class Project extends Rest
         $audit_info['entity_id'] = $id;
         $audit_info['action'] = 'updated';
         $old_data = $this->project_details($id);
-        $audit_id = $this->Audit_model->update_audit_2($old_data['resp'],$jsonArray, $audit_info);
+        $audit_id = $this->Audit_model->update_audit_2($old_data['resp'], $jsonArray, $audit_info);
         // $audit_id = $this->Audit_model->update_project_status($audit_info, $status);
         
-        $this->Project_model->update_project($update,$id);
+        $this->Project_model->update_project($update, $id);
         
         if($audit_id!='false')              
             $this->Audit_model->activate_audit($audit_id);
@@ -1058,7 +1116,7 @@ class Project extends Rest
         $role_id = $valid_auth_token->role_id;
         $ngo_id = login_ngo_details($auth_token);
 
-        $project_ngo_check = $this->Project_model->project_ngo($ngo_id,$id);
+        $project_ngo_check = $this->Project_model->project_ngo($ngo_id, $id);
         if(empty($project_ngo_check))
         {
             $data['error'] = true;
@@ -1068,17 +1126,6 @@ class Project extends Rest
             echo json_encode($data,JSON_NUMERIC_CHECK);
             exit;
         }
-
-        $audit_info['user_id'] = $valid_auth_token->user_id;
-        $audit_info['role_id'] = $role_id;
-        $audit_info['org_id'] = $ngo_id;
-        $audit_info['entity'] = 'project';
-        $audit_info['entity_id'] = $id;
-        $audit_info['action'] = 'updated';
-        $new_data = $jsonArray;
-        $old_data = $this->project_details($id);
-        $old_data = $old_data['resp'];
-        $audit_id = $this->Audit_model->update_audit($old_data,$new_data,$audit_info);
 
         //member and admin both can update outcomes
         //outcomes validation
@@ -1151,7 +1198,7 @@ class Project extends Rest
                 $previous_status = $projectDetails->status_name;
                 if($previous_status=='Inactive')
                 {
-                    $count  = $this->Project_model->project_list_count($ngo_id,'','true')->num;
+                    $count  = $this->Project_model->project_list_count($ngo_id, '', 'true')->num;
                     if($count >= 12)
                     {
                         $data['error'] = true;
@@ -1265,6 +1312,7 @@ class Project extends Rest
                 return $data;
             }
             //members list
+
             if(!empty($members))
             {
                 
@@ -1283,6 +1331,17 @@ class Project extends Rest
                 }
                 
             }//if(!empty($members)) 
+
+            $audit_info['user_id'] = $valid_auth_token->user_id;
+            $audit_info['role_id'] = $role_id;
+            $audit_info['org_id'] = $ngo_id;
+            $audit_info['entity'] = 'project';
+            $audit_info['entity_id'] = $id;
+            $audit_info['action'] = 'updated';
+            $new_data = $jsonArray;
+            $old_data = $this->project_details($id);
+            $old_data = $old_data['resp'];
+            $audit_id = $this->Audit_model->update_audit($old_data, $new_data, $audit_info);
             
             $currentAmount = 0;
             //members list
@@ -1298,13 +1357,13 @@ class Project extends Rest
                     //check its a valid member for project
                     
                     //check fund entry
-                    $entry = $this->Project_model->check_project_funding($companyId,$id);
+                    $entry = $this->Project_model->check_project_funding($companyId, $id);
                     if(!empty($entry))
                     {
                         $update_fund['last_updated'] = date('Y-m-d H:i:s');
                         $fund_id = $entry->id;
                         //update entry
-                        $this->Project_model->update_project_funding($update_fund,$fund_id);
+                        $this->Project_model->update_project_funding($update_fund, $fund_id);
                     }
                     else
                     {                       
@@ -1332,9 +1391,9 @@ class Project extends Rest
                     if(!empty($country) && !empty($countryCode) )
                     {
                         $state = isset($regions['state'])?$regions['state']:'';
-                        $insert_country['country_id'] = $this->Country_model->country_get_insert($country,$countryCode);
+                        $insert_country['country_id'] = $this->Country_model->country_get_insert($country, $countryCode);
                         if(!empty($state))
-                            $insert_country['state_id'] = $this->Country_model->state_get_insert($state,$insert_country['country_id']);
+                            $insert_country['state_id'] = $this->Country_model->state_get_insert($state, $insert_country['country_id']);
                         else
                             $insert_country['state_id'] = NULL;
                         $this->Project_model->project_country_region($insert_country);
@@ -1357,9 +1416,60 @@ class Project extends Rest
 
         //update project
         $insert['track_goal'] = 1;
+        
+        //routes
+        $ngo_details = $this->Ngo_model->organization_details($ngo_id, 'any');
+        $ngo_name = $ngo_details->ngo_url_suffix;
+        $ngo_url_suffix = $ngo_details->ngo_url_suffix;
+        $url1 = str_replace(' ', '-', $project_name); 
+        // $url1 = 'projects/'.rawurlencode($url1).'-'.$id;
+        // $check1 = $this->Routing_model->get_url_slug_data($url1);
+        // if(!empty($check1))
+        // {
+        //     if($check1->entity_id!=$id)
+        //     {
+        //         $data['error'] = true;
+        //         $data['status'] = 400;
+        //         $data['message'] = "Url routing unique constraint failed, Please change project name.";
+        //         header('HTTP/1.1 400 Validation Error.');
+        //         echo json_encode($data,JSON_NUMERIC_CHECK);
+        //         exit;
+        //     }
+        // }
+        if($ngo_url_suffix!=null && $ngo_url_suffix!='')
+        {
+            $url2 = rawurlencode($ngo_url_suffix).'/projects/'.rawurlencode($url1).'-'.$id;
+            $check2 = $this->Routing_model->get_url_slug_data($url2);
+            if(!empty($check2))
+            {
+                if($check2->second_entity_id!=$id)
+                {
+                    $data['error'] = true;
+                    $data['status'] = 400;
+                    $data['message'] = "Url routing unique constraint failed, Please change project name.";
+                    header('HTTP/1.1 400 Validation Error.');
+                    echo json_encode($data,JSON_NUMERIC_CHECK);
+                    exit;
+                }
+            }
+        }
+        //routes
 
-        //update project
-        $this->Project_model->update_project($insert,$id);
+        $this->Project_model->update_project($insert, $id);
+
+        //routes
+        if($projectDetails->title!=$project_name)
+        {
+            // $update_url1['url_slug'] = $url1;
+            // $this->Routing_model->update_url($update_url1, array('page_id'=>11, 'entity_id'=>$id));
+
+            if($ngo_url_suffix!=null && $ngo_url_suffix!='')
+            {
+                $update_url2['url_slug'] = $url2;
+                $this->Routing_model->update_url($update_url2, array('page_id'=>10, 'entity_id'=>$ngo_id, 'second_entity_id'=>$id));
+            }
+        }
+        // routes
 
         $this->organisation_beneficiaries($ngo_id);
         //update company beneficiaries      
@@ -1374,7 +1484,7 @@ class Project extends Rest
                 if(!empty($totalBenefeciariesCompany))
                 {
                     $update_comp_benef['total_no_of_benefeciaries'] = $totalBenefeciariesCompany->no_benefeciaries;
-                    $this->Project_model->update_organisation($update_comp_benef,$companyId);
+                    $this->Project_model->update_organisation($update_comp_benef, $companyId);
                 }
             }
             
@@ -1401,7 +1511,7 @@ class Project extends Rest
                 else
                 {                   
                     //update outcomes
-                    $this->Project_model->update_outcomes($outcome_insert,$outcome_id);
+                    $this->Project_model->update_outcomes($outcome_insert, $outcome_id);
                 }
                 
             }//foreach
@@ -1507,9 +1617,9 @@ class Project extends Rest
             $audit_info['entity_id'] = $id;
             $audit_info['action'] = 'deleted';
 
-            $audit_id = $this->Audit_model->delete_audit($outcome,$audit_info);
+            $audit_id = $this->Audit_model->delete_audit($outcome, $audit_info);
             
-            $this->Project_model->update_outcomes($update,$id);
+            $this->Project_model->update_outcomes($update, $id);
             
             if(isset($audit_id))                
                 $this->Audit_model->activate_audit($audit_id);
@@ -1539,7 +1649,7 @@ class Project extends Rest
         if(!empty($organisationData))
         {
             $update_org['total_no_of_benefeciaries'] = $organisationData->no_benefeciaries;
-            $this->Project_model->update_organisation($update_org,$ngo_id);
+            $this->Project_model->update_organisation($update_org, $ngo_id);
         }
         return;
     }//organisation_beneficiaries
@@ -1569,7 +1679,7 @@ class Project extends Rest
         }
         $data['error'] = false;
         $data['resp']['count'] = $this->Activity_model->project_activity_media_count($id);
-        $data['resp']['media'] = $this->Activity_model->project_activity_media($id,$offset,$limit);
+        $data['resp']['media'] = $this->Activity_model->project_activity_media($id, $offset, $limit);
         echo json_encode($data,JSON_NUMERIC_CHECK);
     }//public function project_media($id)
     public function project_latest_updates($id)
@@ -1589,7 +1699,7 @@ class Project extends Rest
         $outcome_info = $this->Project_model->outcome_list($id);
         $outcome_ids = array_column(json_decode(json_encode($outcome_info), true), 'id');
 
-        $activity_list = $this->Activity_model->project_activity($id,$offset,$limit);
+        $activity_list = $this->Activity_model->project_activity($id, $offset, $limit);
         $i=0;
         $activity_data = array();
         if(!empty($activity_list))
@@ -1616,7 +1726,7 @@ class Project extends Rest
                 $i++;
             }
         }
-        $data['resp']['count'] = $this->Activity_model->project_activity_count($id,$offset,$limit);
+        $data['resp']['count'] = $this->Activity_model->project_activity_count($id, $offset, $limit);
         $data['resp']['updates'] = $activity_data;
         echo json_encode($data,JSON_NUMERIC_CHECK);
         return;
@@ -1672,6 +1782,261 @@ class Project extends Rest
         $data['message'] = "Successfully deleted.";
         echo json_encode($data,JSON_NUMERIC_CHECK);
         exit;
+    }
+
+    public function get_all_projects()
+    {
+        $page = ($this->input->get('page'))?$this->input->get('page'):1;
+        $limit = ($this->input->get('limit'))?$this->input->get('limit'):10;
+        $offset=($page-1)*$limit;           
+        $query = ($this->input->get('query'))?$this->input->get('query'):'';
+        $status = ($this->input->get('status'))?$this->input->get('status'):'';
+        $countryId = ($this->input->get('countryId'))?$this->input->get('countryId'):'';
+        $category_id = ($this->input->get('categoryId'))?$this->input->get('categoryId'):'';
+        $ngoId = ($this->input->get('ngoId'))?$this->input->get('ngoId'):'';
+
+        if($status!='')
+        {
+            $status = strtolower($status);
+            $status = str_replace('-', ' ', $status);
+        }
+
+        $project_count = $this->Project_model->get_project_list_count($query, $status, $countryId, $category_id, $ngoId);
+        $project_list = $this->Project_model->get_project_list($limit, $offset, $query, $status, $countryId, $category_id, $ngoId);
+        $project_final_data = array();
+        $p = 0;
+        foreach($project_list as $project)
+        {
+            $id = $project->id;
+            $project_info = $this->Project_model->project_details($id);
+            $project_data = array();
+            $project_data['id'] = $project_info->id;
+            $project_data['longDescription'] = $project_info->long_description;
+            $project_data['shortDescription'] = $project_info->short_description;
+            $project_data['imageUrl'] = $project_info->image_url;
+            $project_data['videoUrl'] = $project_info->video_url;
+            $project_data['title'] = $project_info->title;
+            $project_data['totalBenefeciaries'] = $project_info->total_benefeciaries;
+            $project_data['status'] = $project_info->status_name;
+            $project_data['microSite'] = $project_info->micro_site;
+            $start_date = $end_date = '';
+            $project_data['startDate'] = $start_date = $project_info->start_date;
+            $project_data['endDate'] = $end_date = $project_info->end_date;
+            if($start_date!='')
+            {
+                $project_data['startDate'] = $start_date = strtoupper(date('F d, Y',strtotime($start_date)));
+            }
+            if($end_date!='')
+            {
+                $project_data['endDate'] = $end_date = strtoupper(date('F d, Y',strtotime($end_date)));
+            }
+            if($start_date!='' && $end_date!='')
+            {
+                $duration = strtotime($end_date) - strtotime($start_date);
+                $days = floor($duration/(24*60*60));
+                $project_data['duration'] = $days;
+            }
+            $project_data['overAllOutcome'] = $project_info->over_all_goal;
+            $project_data['targetAmount'] = $project_info->goal_amount;
+            $project_data['fundingsToDate'] = $project_info->fundings_to_date;
+            $project_data['currentAmount'] = $project_info->current_amount;
+            $project_data['noOfPeopleInvolved'] = $project_info->no_of_people_involved;
+            $project_data['lastUpdated'] = $project_info->last_updated;
+            $project_data['dateCreated'] = $project_info->date_created;
+            $latest_update = $this->Activity_model->get_latest_project_activity($id);
+            $string = null;
+            if(!empty($latest_update))
+                $updatedAt = $latest_update->last_updated;
+            else
+                $updatedAt = $project_info->last_updated;
+
+            $current_date = date('Y-m-d H:i:s');
+            $date_diff = strtotime($current_date) - strtotime($updatedAt);
+
+            $seconds = array( 365 * 24 * 60 * 60  =>  'year',
+                         30 * 24 * 60 * 60  =>  'month',
+                              24 * 60 * 60  =>  'day',
+                                   60 * 60  =>  'hour',
+                                        60  =>  'minute',
+                                         1  =>  'second'
+                        );
+            $seconds_plural = array( 'year'   => 'years',
+                               'month'  => 'months',
+                               'day'    => 'days',
+                               'hour'   => 'hours',
+                               'minute' => 'minutes',
+                               'second' => 'seconds'
+                        );
+            foreach ($seconds as $secs => $str)
+            {
+                $d = $date_diff / $secs;
+                if ($d >= 1)
+                {
+                    $r = round($d);
+                    $string = $r . ' ' . ($r > 1 ? $seconds_plural[$str] : $str) . ' ago';
+                    break;
+                }
+            }
+            $project_data['updatedAt'] = $string;
+            $project_data['completedAt'] = $updatedAt;
+
+            $project_data['deletedAt'] = $project_info->deleted_at;         
+            $project_data['isCrowdFunded'] = $project_info->is_crowd_sourced;
+            if (ord($project_data['isCrowdFunded'])==1 || $project_data['isCrowdFunded']==1)
+                $project_data['isCrowdFunded'] = true;
+            else
+                $project_data['isCrowdFunded'] = false;
+            if (ord($project_info->is_featured_project)==1 || $project_info->is_featured_project==1)
+                $project_data['isFeaturedProject'] = true;
+            else
+                $project_data['isFeaturedProject'] = false;
+            $project_data['ngoId'] = $ngo_id = $project_info->ngo_id;
+            $ngo_details = $this->Ngo_model->organization_details($ngo_id, 'any');
+            $project_data['ngoName'] = $ngo_details->name;
+            $project_data['brandingUrlView'] = $ngo_details->ngo_url_suffix;
+            //country details
+            $country_info = $this->Project_model->project_country_details($id);
+
+            if(!empty($country_info))
+            {
+                
+                $project_data['country'] = $country_info->name;
+                $project_data['countryCode'] = $country_info->code;
+            }else
+            {
+                $project_data['country'] = "";
+                $project_data['countryCode'] = "";
+            }
+
+            //outcome list
+            $outcome_data = array();
+            $outcome_info = $this->Project_model->outcome_list($id);
+            $achievedOutcome=0;
+            if(!empty($outcome_info))
+            {
+                $i = 0;
+                foreach($outcome_info as $outcome)
+                {
+                    $outcome_data[$i]['id'] = $outcome->id;
+                    $outcome_data[$i]['outcome'] = $outcome->goal;
+                    $outcome_data[$i]['currentOutcome'] = $outcome->goal_achieved;
+                    $outcome_data[$i]['goalOutcome'] = $outcome->goal_target;
+                    $outcome_data[$i]['description'] = $outcome->description;
+                    $achievedOutcome+=$outcome_data[$i]['currentOutcome'];
+                    
+                    $categories_id = $outcome->categories_id;
+                    
+                    //get tha data of categories associated with goal
+                    if(!empty($categories_id))
+                    {
+                        $cat_info = $this->Category_model->category_info($categories_id);
+                        $cat_data = array();
+                        if(!empty($cat_info))
+                        {
+                            $cat_data['id'] = $cat_info->id;
+                            $cat_data['category'] = $cat_info->category;
+                            $cat_data['subcategory'] = $cat_info->subcategory;
+                            $cat_data['logoUrl'] = $cat_info->image_url;
+                        }
+                        $outcome_data[$i]['category'] = $cat_data;
+                    }
+                    $i++;
+                }
+            }
+            $project_data['achievedOutcome'] = $achievedOutcome;
+            //member list
+            $member_data = array();
+            $member_list = $this->Project_model->list_project_members($id);
+            if(!empty($member_list))
+            {
+                $k = 0;
+                foreach($member_list as $member_info)
+                {
+                    $member_data[$k]['id'] = $member_info->id;
+                    $member_data[$k]['name'] = $member_info->first_name." ".$member_info->last_name;
+                    $member_data[$k]['imageUrl'] = $member_info->image_url;
+                    $k++;
+                }
+            }   
+            //country details
+            $country_regions = $this->Project_model->project_country_regions($id);
+            $final_country = array();
+            $cr = 0;
+            if(!empty($country_regions))
+            {
+                foreach ($country_regions as $country_region)
+                {
+                    $countryCode = "";
+                    $country = "";
+                    $state = "";
+                    $country_id = $country_region->country_id;
+                    $state_id = $country_region->state_id;
+                    if(!empty($country_id))
+                    {
+                        $country_info = $this->Country_model->country_info($country_id);
+                        if(!empty($country_info))
+                        {
+                            $country = $country_info->name;
+                            $countryCode = $country_info->code;
+                            $countryUrl = $country_info->flag_url;
+                        }
+                        if(!empty($state_id))
+                        {
+                            $state_info = $this->Country_model->state_info($state_id);
+                            if(!empty($state_info))
+                            {
+                                $state = $state_info->name;                             
+                            }
+                        }
+                    }
+                    $final_country[$cr]['country']  = $country;
+                    $final_country[$cr]['countryCode']  = $countryCode;
+                    $final_country[$cr]['countryUrl']   = $countryUrl;
+                    $final_country[$cr]['state']    = $state;
+                    $cr++;
+                }           
+            }    
+
+            $donors = $this->Project_model->get_project_donors($id);
+            $donors_data = array();
+            if(!empty($donors))
+            {
+                $i=0;
+                foreach ($donors as $donor) {
+                    $donors_data[$i]['id'] = $donor->id;
+                    $donors_data[$i]['imageUrl'] = $donor->image_url;
+                    $donors_data[$i]['donorUrl'] = $donor->donor_url;
+                    $donors_data[$i]['name'] = $donor->name;
+                    $i++;
+                }
+            }
+
+            $project_final_data[$p] = $project_data;
+            $project_final_data[$p]['outcomes'] = $outcome_data;
+            $project_final_data[$p]['members'] = $member_data;  
+            $project_final_data[$p]['countryRegion'] = $final_country;
+            $project_final_data[$p]['donor'] = $donors_data;    
+
+            $is_new_highlight = $this->Project_model->is_new_highlight($id);
+            if(empty($is_new_highlight))
+                $project_final_data[$p]['is_new_highlight'] = false;
+            else
+            {
+                $update_date = $is_new_highlight->date_created;
+                $current_date = date('Y-m-d H:i:s');
+                $diff  = (strtotime($current_date) - strtotime($update_date))/3600;
+                if($diff<=48)
+                    $project_final_data[$p]['is_new_highlight'] = true;
+                else
+                    $project_final_data[$p]['is_new_highlight'] = false;
+            }
+            $p++;
+        }
+        $data['error'] = false;
+        $data['resp']['count'] = $project_count;
+        $data['resp']['project'] = $project_final_data;
+        echo json_encode($data, JSON_NUMERIC_CHECK);
+        return;
     }
 }//end project
 

@@ -241,7 +241,7 @@ class Organisation extends Rest
         }
         
         //check registrationNo unique
-        $unique_registartion_no = $this->Ngo_model->registration_unique($registration_no,'');
+        $unique_registartion_no = $this->Ngo_model->registration_unique($registration_no, '');
         if(!empty($unique_registartion_no))
         {
             $data['error'] = true;
@@ -257,7 +257,7 @@ class Organisation extends Rest
             foreach($handlename as $handlename_list)
             {
                 //check handle is unique for NGO 
-                $unique_handle_name = $this->Hashtag_model->check_handle_unique($handlename_list['handleName'],'');
+                $unique_handle_name = $this->Hashtag_model->check_handle_unique($handlename_list['handleName'], '');
                 if(!empty($unique_handle_name))
                 {
                     $data['error'] = true;
@@ -273,13 +273,13 @@ class Organisation extends Rest
         //check entry of country if exists then fetch id otherwise insert
         if(!empty($country))
         {
-            $insert['country_id'] = $this->Country_model->country_get_insert($country,$country_code);
+            $insert['country_id'] = $this->Country_model->country_get_insert($country, $country_code);
             //check entry of state if exists then fetch id otherwise insert
             if(!empty($state))
             {
-                $insert['state_id'] = $this->Country_model->state_get_insert($state,$insert['country_id']);
+                $insert['state_id'] = $this->Country_model->state_get_insert($state, $insert['country_id']);
                 //check entry of city if exists then fetch id otherwise insert
-                $insert['city_id'] = $this->Country_model->city_get_insert($city,$insert['state_id']);
+                $insert['city_id'] = $this->Country_model->city_get_insert($city, $insert['state_id']);
             }//if(!empty($state))       
         }//if(!empty($country))
         

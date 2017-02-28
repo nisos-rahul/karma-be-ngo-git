@@ -53,7 +53,7 @@ class Dashboard_model extends CI_Model
         $result = $this->db->query($query);
         return $result->result();
     }
-    public function project_activity_year($ngo_id,$year,$month)
+    public function project_activity_year($ngo_id, $year, $month)
     {
         $query="SELECT COUNT(*) as num,  
         project.title

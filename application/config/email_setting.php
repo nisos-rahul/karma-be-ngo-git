@@ -2,7 +2,8 @@
 
 
 include 'environment.php';
-$path="/home/devuser/projects/karma-configuration/{$_SERVER['ENV']}.backend.json";
+// $path="/home/devuser/projects/karma-configuration/{$_SERVER['ENV']}.backend.json";
+$path="../karma-configuration/{$_SERVER['ENV']}.backend.json";
 $string = file_get_contents($path);
 $envjson = json_decode($string, true);
 

@@ -28,6 +28,9 @@ class Ngo extends Rest
         $this->load->model('Activity_model');
         $this->load->model('Ngo_model');
         $this->load->model('Social_media_sharing_model');
+        $this->load->model('Routing_model');
+        $this->load->model('Project_model');
+        $this->load->helper('url_routing');
     }
 
     protected function ngo_details($id='')
@@ -77,55 +80,6 @@ class Ngo extends Rest
         if(!empty($organisation))
         {
             $data = ngo_profile_details($id);
-            // $where1 = array('ngo_id'=>$id);
-            // $ngo_social_data = $this->Social_media_sharing_model->get_user_data($where1);
-            // if(!empty($ngo_social_data))
-            // {
-            //     if($ngo_social_data->facebook_is_post_on_pages==0)
-            //     {
-            //         if($ngo_social_data->manual_unlink==1)
-            //         {
-            //             $data['resp']['manualUnlink'] = true;
-            //             $data['resp']['facebook_connect_status'] = false;
-            //         }
-            //         else
-            //         {
-            //             if($ngo_social_data->fb_extended_access_token_expires!=null || $ngo_social_data->fb_extended_access_token_expires!='')
-            //             {
-            //                 $expiresAt = $ngo_social_data->fb_extended_access_token_expires;
-            //                 $current_date = date('Y-m-d H:i:s');
-
-            //                 if($expiresAt<$current_date)
-            //                 {
-            //                     $data['resp']['manualUnlink'] = true;
-            //                     $data['resp']['facebook_connect_status'] = false;
-                                
-            //                     $update['manual_unlink'] = 1;
-            //                     $update['fb_extended_access_token'] = null;
-            //                     $update['fb_extended_access_token_expires'] = null;
-            //                     $social_id = $ngo_social_data->id;
-            //                     $this->Social_media_sharing_model->update_user_data($update,array('id'=>$social_id));
-            //                 }
-            //                 else
-            //                 {
-            //                     $data['resp']['manualUnlink'] = false;
-            //                 }
-            //             }
-            //             else
-            //             {
-            //                 $data['resp']['manualUnlink'] = false;
-            //             }
-            //         }
-            //     }
-            //     else
-            //     {
-            //         $data['resp']['manualUnlink'] = false;
-            //     }
-            // }
-            // else
-            //     $data['resp']['manualUnlink'] = false;
-        }
-        else
         {
             $data['error'] = true;
             $data['status'] = 404;
@@ -184,6 +138,40 @@ class Ngo extends Rest
         }
         //role_check
 
+        //role_check
+        if($role_id==4)
+        {   
+            $organization_exists = $this->Ngo_model->organization_exist($user_id);
+        }
+        elseif($role_id==7)
+        {
+            $supportNgos = support_ngos($user_id);
+            $supportCount = 0;
+            foreach($supportNgos as $supportNgo)
+            {
+                if($supportNgo['id']==$id)  
+                    $supportCount++;
+            }
+
+            if($supportCount==0)
+            {
+
+                header('HTTP/1.1 401 Unauthorized User');
+                return;
+            }
+            
+            $organization_exists = $this->Ngo_model->organization_details($id);
+        }
+        //role_check
+        if(empty($organization_exists))
+        {
+            $data['error'] = true;  
+            $data['status'] = 404;
+            $data['meassage'] = "Operation failed to find NGO using id mentioned."; 
+            header('HTTP/1.1 404 Not Found');
+            return;
+        }//else
+
         //input data
         //insert into organization
         $jsonArray = json_decode(file_get_contents('php://input'),true);            
@@ -197,6 +185,7 @@ class Ngo extends Rest
         $country_code = isset($jsonArray['countryCode'])?$jsonArray['countryCode']:'';
         $insert['website_url'] = isset($jsonArray['websiteUrl'])?$jsonArray['websiteUrl']:'';
         $insert['branding_url'] = isset($jsonArray['brandingUrl'])?$jsonArray['brandingUrl']:'';
+        $insert['ngo_url_suffix'] = isset($jsonArray['brandingUrlView'])?$jsonArray['brandingUrlView']:'';
         $donation_status = isset($jsonArray['donationStatus'])?$jsonArray['donationStatus']:'';
         if($donation_status==true)
             $insert['donation_status'] = 1;
@@ -344,6 +333,8 @@ class Ngo extends Rest
             echo json_encode($data,JSON_NUMERIC_CHECK);
             return;
         }
+        // var_dump($insert['branding_url']);
+        // die;
         if(!empty($insert['branding_url']))
         {
             //check unique branding_url
@@ -376,13 +367,13 @@ class Ngo extends Rest
         //check entry of country if exists then fetch id otherwise insert
         if(!empty($country))
         {
-            $insert['country_id'] = $this->Country_model->country_get_insert($country,$country_code);
+            $insert['country_id'] = $this->Country_model->country_get_insert($country, $country_code);
             //check entry of state if exists then fetch id otherwise insert
             if(!empty($state))
             {
-                $insert['state_id'] = $this->Country_model->state_get_insert($state,$insert['country_id']);
+                $insert['state_id'] = $this->Country_model->state_get_insert($state, $insert['country_id']);
                 //check entry of city if exists then fetch id otherwise insert
-                $insert['city_id'] = $this->Country_model->city_get_insert($city,$insert['state_id']);
+                $insert['city_id'] = $this->Country_model->city_get_insert($city, $insert['state_id']);
             }//if(!empty($state))       
         }//if(!empty($country))
         
@@ -392,7 +383,7 @@ class Ngo extends Rest
             foreach($handlename as $handlename_list)
             {
                 //check handle is unique for NGO 
-                $unique_handle_name = $this->Hashtag_model->check_handle_unique($handlename_list['handleName'],$id);
+                $unique_handle_name = $this->Hashtag_model->check_handle_unique($handlename_list['handleName'], $id);
                 if(!empty($unique_handle_name))
                 {
                     $data['error'] = true;
@@ -410,7 +401,7 @@ class Ngo extends Rest
             foreach($facebookHandles as $facebookHandle)
             {
                 //check handle is unique for NGO 
-                $unique_handle_name = $this->Hashtag_model->check_facebook_handle_unique($facebookHandle['handleName'],$id);
+                $unique_handle_name = $this->Hashtag_model->check_facebook_handle_unique($facebookHandle['handleName'], $id);
                 if(!empty($unique_handle_name))
                 {
                     $data['error'] = true;
@@ -423,32 +414,6 @@ class Ngo extends Rest
             }
         }
         //check ngo profile created or not
-
-        //role_check
-        if($role_id==4)
-        {   
-            $organization_exists = $this->Ngo_model->organization_exist($user_id);
-        }
-        elseif($role_id==7)
-        {
-            $supportNgos = support_ngos($user_id);
-            $supportCount = 0;
-            foreach($supportNgos as $supportNgo)
-            {
-                if($supportNgo['id']==$id)  
-                    $supportCount++;
-            }
-
-            if($supportCount==0)
-            {
-
-                header('HTTP/1.1 401 Unauthorized User');
-                return;
-            }
-            
-            $organization_exists = $this->Ngo_model->organization_details($id);
-        }
-        //role_check
 
         if(!empty($organization_exists))
         {
@@ -468,15 +433,104 @@ class Ngo extends Rest
                 $audit_info['action'] = 'updated';
                 $old_data = ngo_profile_details($ngo_id);
                 $old_data = $old_data['resp'];
-                $audit_id = $this->Audit_model->update_audit($old_data,$jsonArray,$audit_info);
+                $audit_id = $this->Audit_model->update_audit($old_data, $jsonArray, $audit_info);
 
                 $insert['last_updated'] = date('Y-m-d H:i:s');
-                $this->Ngo_model->update_ngo($insert,$id);
+
+                //routes
+                if($organization_exists->ngo_url_suffix!=$insert['ngo_url_suffix'])
+                {
+                    // entry new routes
+                    if($insert['ngo_url_suffix']!='')
+                    {
+                        $main_array = array();
+                        $ngo_routing_urls = array();
+
+                        $ngo_branding_slug = str_replace(' ', '-', $insert['ngo_url_suffix']); 
+                        $ngo_branding_slug = rawurlencode($ngo_branding_slug); 
+                        array_push($ngo_routing_urls, $ngo_branding_slug);
+
+                        $array = array();
+                        $array['page_id'] = 8;
+                        $array['entity_name'] = 'ngo_branding_change';
+                        $array['entity_id'] = $ngo_id;
+                        $array['url_slug'] = $ngo_branding_slug;
+                        array_push($main_array, $array);
+
+                        $ngo_branding_slug_plus_projects = $ngo_branding_slug.'/projects';
+                        array_push($ngo_routing_urls, $ngo_branding_slug_plus_projects);
+
+                        $array = array();
+                        $array['page_id'] = 9;
+                        $array['entity_name'] = 'ngo_branding_change';
+                        $array['entity_id'] = $ngo_id;
+                        $array['url_slug'] = $ngo_branding_slug_plus_projects;
+                        array_push($main_array, $array);
+
+                        $ngo_projects = $this->Project_model->get_all_projects(array('ngo_id'=>$ngo_id));
+                        if(!empty($ngo_projects))
+                        {
+                            foreach($ngo_projects as $project)
+                            {
+                                $project_title_slug = str_replace(' ', '-', $project->title); 
+                                $project_title_slug = rawurlencode($project_title_slug);
+                                $project_title_url = $ngo_branding_slug.'/projects/'.$project_title_slug.'-'.$project->id;
+                                array_push($ngo_routing_urls, $project_title_url);
+
+                                $array = array();
+                                $array['page_id'] = 10;
+                                $array['entity_name'] = 'ngo_branding_change';
+                                $array['entity_id'] = $ngo_id;
+                                $array['second_entity_id'] = $project->id;
+                                $array['url_slug'] = $project_title_url;
+                                array_push($main_array, $array);
+                            }
+                        }
+                        $error = 0;
+                        foreach($ngo_routing_urls  as $url)
+                        {
+                            $url_slug_data = $this->Routing_model->get_url_slug_data($url);
+                            if(!empty($url_slug_data))
+                            {
+                                if($url_slug_data->entity_id!=$id)
+                                    $error++;
+                            }
+                        }
+                        if($error!=0)
+                        {
+                            $data['error'] = true;
+                            $data['status'] = 400;
+                            $data['message'] = "Url routing unique constraint failed, Please change branding url.";
+                            header('HTTP/1.1 400 Validation Error.');
+                            echo json_encode($data,JSON_NUMERIC_CHECK);
+                            return;
+                        }
+                    }
+                }
+                //routes
+
+                $this->Ngo_model->update_ngo($insert, $id);
                 
                 if($audit_id!='false')              
                     $this->Audit_model->activate_audit($audit_id);
                 //audit ngo_profile
                 
+                // routes
+                if($organization_exists->ngo_url_suffix!=$insert['ngo_url_suffix'])
+                {
+                        // delete routes
+                        $this->Routing_model->delete_ngo_branding_url_routes($ngo_id);
+
+                        // entry new routes
+                        if($insert['ngo_url_suffix']!='')
+                        {
+                            foreach ($main_array as $value) {
+                                $this->Routing_model->insert_url($value);
+                            }
+                        }
+                }
+                // routes
+
                 //delete all existing categories and insert new
                 $this->Ngo_model->delete_category_ngo($id);
                 //insert categories_ngo
@@ -505,7 +559,7 @@ class Ngo extends Rest
                             'organisation_id'=>$ngo_id,
                             'is_active'=>1,
                             'is_deleted'=>false);
-                        $handleExisting = $this->Hashtag_model->get_handle_details('twitter_handles',$where);
+                        $handleExisting = $this->Hashtag_model->get_handle_details('twitter_handles', $where);
                         if(empty($handleExisting))
                         {
                             //insert 
@@ -541,7 +595,7 @@ class Ngo extends Rest
                             'organisation_id'=>$ngo_id,
                             'is_active'=>true,
                             'is_deleted'=>false);
-                        $handleExisting = $this->Hashtag_model->get_handle_details('facebook_handles',$where);
+                        $handleExisting = $this->Hashtag_model->get_handle_details('facebook_handles', $where);
                         if(empty($handleExisting))
                         {
                             //insert
@@ -577,7 +631,7 @@ class Ngo extends Rest
             return;
         }//else
     }//ngo_profile  
-    public function delete_video($ngo_id,$id)
+    public function delete_video($ngo_id, $id)
     {
         $id = $id;
         $method = $this->input->get('method');
@@ -592,14 +646,14 @@ class Ngo extends Rest
             return;
         }
         //check video by id exists or not
-        $video = $this->Ngo_model->get_video($id,$ngo_id);
+        $video = $this->Ngo_model->get_video($id, $ngo_id);
         if(!empty($video))
         {
             if($method=="DELETE")
             {
                 $update['deleted_at'] = date('Y-m-d H:i:s');
                 $update['is_deleted'] = 1;
-                $this->Ngo_model->update_video($update,$id);
+                $this->Ngo_model->update_video($update, $id);
                 $data['error'] = false;
                 $data['status'] = 200;
                 echo json_encode($data,JSON_NUMERIC_CHECK);
@@ -621,7 +675,7 @@ class Ngo extends Rest
                     echo json_encode($data,JSON_NUMERIC_CHECK);
                     return;
                 }
-                $this->Ngo_model->update_video($update,$id);
+                $this->Ngo_model->update_video($update, $id);
                 $data['error'] = false;
                 $data['resp']['id'] = $id;
                 $data['resp']['url'] = $update['video_url'];
@@ -726,13 +780,21 @@ class Ngo extends Rest
     public function ngo_by_website()
     {
         $headers = getallheaders();
-        $branding_url = $headers['apporigin'];
-        if(empty($branding_url))
+        if(isset($headers['apporigin']))
         {
-            header('HTTP/1.1 404 Not Found');
-            return;
+            $branding_url = $headers['apporigin'];
+            if(empty($branding_url))
+            {
+                header('HTTP/1.1 404 Not Found');
+                return;
+            }
+            $ngo_details = $this->Ngo_model->organisation_gloabal_details(array('branding_url' => $branding_url));
         }
-        $ngo_details = $this->Ngo_model->organisation_gloabal_details(array('branding_url' => $branding_url));
+        else
+        {
+            $url_suffix = $this->input->get('url_suffix');
+            $ngo_details = $this->Ngo_model->organisation_gloabal_details(array('ngo_url_suffix' => $url_suffix));
+        }
         if(empty($ngo_details))
         {
             header('HTTP/1.1 404 Not Found');
@@ -743,7 +805,6 @@ class Ngo extends Rest
 
         $data = json_encode($data,JSON_NUMERIC_CHECK);
         echo $data;
-        
         return;
     }//ngo_by_website
 
@@ -811,7 +872,7 @@ class Ngo extends Rest
         }
 
         $update['is_accepted_terms_and_conditions'] = 1;
-        $this->Ngo_model->update_ngo($update,$ngo_id);
+        $this->Ngo_model->update_ngo($update, $ngo_id);
         $data['error'] = false;
         $data['message'] = 'NPO profile successfully accepted.';
         echo json_encode($data,JSON_NUMERIC_CHECK);
@@ -834,9 +895,61 @@ class Ngo extends Rest
         }
         $data['error'] = false;
         $data['resp']['count'] = $this->Activity_model->ngo_update_media_count($id);
-        $data['resp']['media'] = $this->Activity_model->ngo_update_media($id,$offset,$limit);
+        $data['resp']['media'] = $this->Activity_model->ngo_update_media($id, $offset, $limit);
         echo json_encode($data,JSON_NUMERIC_CHECK);
     }
+
+    public function get_ngo_data_by_branding()
+    {
+        $branding = $this->input->get('name');
+        // $branding = str_replace('-', ' ', $branding);
+        if($branding===false)
+        {
+            header('HTTP/1.1 404 Not Found');
+            return;
+        }
+        $ngo_details = $this->Ngo_model->organisation_gloabal_details(array('ngo_url_suffix'=>$branding));
+        if(empty($ngo_details))
+        {
+            header('HTTP/1.1 404 Not Found');
+            return;
+        }
+
+        $ngo_data = ngo_profile_details($ngo_details->id,$status='');
+        echo json_encode($ngo_data,JSON_NUMERIC_CHECK);
+        return;
+    }
+
+    public function list_all_ngo()
+    {
+        $page = ($this->input->get('page'))?$this->input->get('page'):1;
+        $limit = ($this->input->get('limit'))?$this->input->get('limit'):10;
+        $offset=($page-1)*$limit;           
+        $query = ($this->input->get('query'))?$this->input->get('query'):'';
+        $country_id = ($this->input->get('countryId'))?$this->input->get('countryId'):'';
+        $category_id = ($this->input->get('categoryId'))?$this->input->get('categoryId'):'';
+        
+        $count = $this->Ngo_model->organisation_list_count($query, $category_id, $country_id);
+        $ngo_list = $this->Ngo_model->organisation_list($limit, $offset, $query, $category_id, $country_id);
+        $i = 0;
+        $ngo_data = array();
+        if(!empty($ngo_list))
+        {
+            foreach ($ngo_list as $ngo) {
+                $ngo_details = ngo_profile_details($ngo->id,$status='');
+                $ngo_data[$i] = $ngo_details['resp'];
+                $i++;
+            }
+        }
+
+        $count = $this->Ngo_model->organisation_list_count($query, $category_id, $country_id);
+        $data['error'] = false;
+        $data['resp']['count'] = $count;
+        $data['resp']['ngo'] = $ngo_data;
+        echo json_encode($data,JSON_NUMERIC_CHECK);
+        return;
+    }
+
 }//end ngo
 
 /* End of file ngo.php */

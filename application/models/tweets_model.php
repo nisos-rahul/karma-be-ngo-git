@@ -2,7 +2,7 @@
 
 class Tweets_model extends CI_Model 
 {
-    public function ngo_tweets($where,$offset,$limit)
+    public function ngo_tweets($where, $offset, $limit)
     {
         $this->db->select('tweets.*');
         $this->db->from('tweets');
@@ -23,7 +23,7 @@ class Tweets_model extends CI_Model
         return $result->row();
     }
 
-    public function ngo_tweets_with_highlights($offset,$limit,$ngo_id)
+    public function ngo_tweets_with_highlights($offset, $limit, $ngo_id)
     {
         $query = "SELECT `tweets`.`id`, `tweets`.`tweet_created_at`, `tweets`.`last_updated`, 
             `tweets`.`name` as tweet_or_project_name, `tweets`.`tweet_text` as tweet_text_or_update_name, 

@@ -167,7 +167,7 @@ class SocialMediaSharing extends Rest
             $update['facebook_is_post_on_pages'] = 0;
             $update['manual_unlink'] = 0;
             $user_social_id = $user->id;
-            $this->Social_media_sharing_model->update_user_data($update,array('id'=>$user_social_id));
+            $this->Social_media_sharing_model->update_user_data($update, array('id'=>$user_social_id));
         }
         $data['token'] = 'abc';
         $data['id'] = $profile['id'];
@@ -311,7 +311,7 @@ class SocialMediaSharing extends Rest
         $update['facebook_is_post_on_pages'] = 1;
         $update['facebook_page_id'] = $page_id;
         $update['facebook_page_access_token'] = $page_access_token;
-        $this->Social_media_sharing_model->update_user_data($update,array('ngo_id'=>$ngo_id));
+        $this->Social_media_sharing_model->update_user_data($update, array('ngo_id'=>$ngo_id));
 
         $data['error'] = false;
         echo json_encode($data,JSON_NUMERIC_CHECK);
@@ -572,7 +572,7 @@ class SocialMediaSharing extends Rest
                 $update['twitter_screen_name'] = $accessToken['screen_name'];
                 $update['updated_at'] = date('Y-m-d H:i:s');
                 $user_social_id = $user->id;
-                $this->Social_media_sharing_model->update_user_data($update,array('id'=>$user_social_id));
+                $this->Social_media_sharing_model->update_user_data($update, array('id'=>$user_social_id));
             }
 
             $data['token'] = 'abc';
@@ -613,7 +613,7 @@ class SocialMediaSharing extends Rest
         $title = isset($jsonArray['update'])?$jsonArray['update']:'';
         $project_id = isset($jsonArray['projectId'])?$jsonArray['projectId']:'';
 
-        $org_data = $this->Ngo_model->organization_details($ngo_id,'any');
+        $org_data = $this->Ngo_model->organization_details($ngo_id, 'any');
         if(empty($org_data))
         {
             $data['error'] = true;
@@ -634,6 +634,8 @@ class SocialMediaSharing extends Rest
         }
         $url = $org_data->branding_url."/project-detail.html?projectId=".$project_id;
         // $url = 'http://nisostech.dev.karmaworld.co/project-detail.html?projectId=19';
+        // $short_url = $this->google_url_api->shorten($url);
+        // $url = $short_url->id;
         $short_url = $this->google_url_api->shorten($url);
         $short_url_array = json_decode(json_encode($short_url),true);
         if(!array_key_exists("id",$short_url_array))
@@ -804,7 +806,7 @@ class SocialMediaSharing extends Rest
         }
         $update['updated_at'] = date('Y-m-d H:i:s');
 
-        $this->Social_media_sharing_model->update_user_data($update,array('user_id'=>$user_id));
+        $this->Social_media_sharing_model->update_user_data($update, array('user_id'=>$user_id));
 
         $data['resp'] = false;
         $data['message'] = 'successful.';
@@ -859,7 +861,7 @@ class SocialMediaSharing extends Rest
         exit;
     }
 
-    public function chech_facebook_expiration()
+    public function check_facebook_expiration()
     {
         $auth_token = $this->input->server('HTTP_X_AUTH_TOKEN');
         $valid_auth_token = $this->Verification_model->valid_auth_token($auth_token);
@@ -922,7 +924,7 @@ class SocialMediaSharing extends Rest
                             $update['facebook_page_id'] = '';
                             $update['facebook_page_access_token'] = '';
                             $social_id = $ngo_social_data->id;
-                            $this->Social_media_sharing_model->update_user_data($update,array('id'=>$social_id));
+                            $this->Social_media_sharing_model->update_user_data($update, array('id'=>$social_id));
                         }
                         else
                         {

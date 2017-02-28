@@ -11,7 +11,7 @@ class Company_model extends CI_Model
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function company_list($search,$offset,$limit)
+    public function company_list($search, $offset, $limit)
     {
         $query = "select id,name from organisation where company_type is not null 
         and is_deleted=0 and is_active=1 ";
@@ -21,7 +21,7 @@ class Company_model extends CI_Model
         $result = $this->db->query($query);
         return $result->result();
     }
-    public function project_company_details($company_id,$ngo_id,$project_id)
+    public function project_company_details($company_id, $ngo_id, $project_id)
     {
         $query = "select * from company_ngo where company_id=$company_id and ngo_id=$ngo_id and project_id=$project_id limit 1";
         $result = $this->db->query($query);
@@ -33,7 +33,7 @@ class Company_model extends CI_Model
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function update_company_ngo($update,$company_id,$ngo_id,$project_id)
+    public function update_company_ngo($update, $company_id, $ngo_id, $project_id)
     {
         $this->db->update('company_ngo',$update,array('company_id'=>$company_id,'ngo_id'=>$ngo_id,'project_id'=>$project_id));
         return;
@@ -51,7 +51,7 @@ class Company_model extends CI_Model
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function active_ngo_project_details($id,$ngo_id)
+    public function active_ngo_project_details($id, $ngo_id)
     {
         $query = "select * from project where id=$id and ngo_id=$ngo_id and is_deleted=0 limit 1";
         $result = $this->db->query($query);
@@ -76,7 +76,7 @@ class Company_model extends CI_Model
         $id = $this->db->insert_id();       
         return $id;
     }
-    public function list_group_company($ngo_id,$search,$offset,$limit)
+    public function list_group_company($ngo_id, $search, $offset, $limit)
     {
         $query = "SELECT `project_group`.`name`,`project_group`.`id`,`project_group`.notification
         FROM `project_group` join project on project.id=project_group.project_id
@@ -87,7 +87,7 @@ class Company_model extends CI_Model
         $result = $this->db->query($query);
         return $result->result();
     }
-    public function list_group_company_count($ngo_id,$search)
+    public function list_group_company_count($ngo_id, $search)
     {
         $query = "SELECT count(*) as num
         FROM `project_group` join project on project.id=project_group.project_id
@@ -130,7 +130,7 @@ class Company_model extends CI_Model
         $result = $this->db->query($query);
         return $result->row();
     }
-    public function update_group($update,$group_id)
+    public function update_group($update, $group_id)
     {
         $this->db->update('project_group',$update,array('id'=>$group_id));
     }

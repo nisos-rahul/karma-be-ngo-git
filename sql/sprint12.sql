@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS `csrf_token` (
+ `id` bigint(20) NOT NULL AUTO_INCREMENT,
+ `token` varchar(255) DEFAULT NULL,
+ PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;

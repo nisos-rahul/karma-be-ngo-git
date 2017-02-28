@@ -1,0 +1,15 @@
+{
+    "name": "example",
+    "description": "Official Kraken.io SDK",
+    "license": "MIT",
+    "require": {
+        "ext-curl": "*",
+        "ext-json": "*",
+        "kraken-io/kraken-php": "^1.2"
+    },
+    "autoload": {
+        "psr-0": {
+            "Kraken": "lib"
+        }
+    }
+}

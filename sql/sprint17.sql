@@ -1,0 +1,1 @@
+update audits set entity = 'outcome' where entity = 'goal';

@@ -1,0 +1,19 @@
+{
+    "require": {
+        "kriswallsmith/buzz": "*",
+        "jonnyw/php-phantomjs": "4.*",
+        "sendgrid/sendgrid": "~5.1",
+        "guzzlehttp/guzzle": "~5.3|~6.0"
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "PhantomInstaller\\Installer::installPhantomJS"
+        ],
+        "post-update-cmd": [
+            "PhantomInstaller\\Installer::installPhantomJS"
+        ]
+    },
+    "config": {
+        "bin-dir": "bin"
+    }
+}

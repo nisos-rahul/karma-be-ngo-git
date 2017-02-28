@@ -1,0 +1,4 @@
+#Command to be run on the server
+cd /home/devuser/projects/karma-be-ngo/
+mkdir design_images
+sudo chown -R www-data:www-data design_images
